@@ -30,7 +30,7 @@ namespace ns3
 
       /** \brief Send an outgoing packet. This creates a new socket every time (not the best solution)
       */
-      void SendPacket ();
+      void SendPacket (Ptr<Packet> packet);
 
       /** \brief return a custom packet with Arq header
       */
@@ -42,22 +42,30 @@ namespace ns3
       void SetMyAddr(Ipv4Address my_addr);
       Ipv4Address GetMyAddr();
 
+      Time m_random_offset;
+
+      Time m_send_time; /**< How often do you broadcast messages */
+
+
 
     private:
-      
-      
+
+
       void SetupReceiveSocket (Ptr<Socket> socket, Ipv4Address myAddr, uint16_t port);
       virtual void StartApplication ();
 
 
       Ptr<Socket> m_recv_socket1; /**< A socket to receive on a specific port */
       Ptr<Socket> m_recv_socket2; /**< A socket to receive on a specific port */
-      uint16_t m_port1; 
+      uint16_t m_port1;
       uint16_t m_port2;
       uint32_t m_packet_size;
      // Ptr<MyHeader> arqHeader;
       Ipv4Address m_destination_addr;
       Ipv4Address m_my_addr;
+
+      uint32_t m_number_of_packets_to_send;
+
 
 
       Ptr<Socket> m_send_socket; /**< A socket to listen on a specific port */

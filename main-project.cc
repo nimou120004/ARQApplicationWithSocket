@@ -76,17 +76,17 @@ int main (int argc, char *argv[])
   ifaces = address.Assign (devices);
 
 
-  
+
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   Packet::EnablePrinting ();
 
 
   //Create our Two UDP applications sink and source
   Ptr <SourceApplication> appSink = CreateObject <SourceApplication> ();
-  Ptr <SinkApplication> appSource = CreateObject <SinkApplication> ();
+  Ptr <SourceApplication> appSource = CreateObject <SourceApplication> ();
 
-  
-  //Set the start & stop times & ip address
+
+  //Set up sink application
   appSink->SetStartTime (Seconds(1));
   appSink->SetStopTime (Seconds (simTime));
   Ipv4Address dest_ip ("10.1.1.2");
@@ -94,7 +94,7 @@ int main (int argc, char *argv[])
   appSink->SetDestinationAddr (dest_ip);
   appSink->SetMyAddr (my_ip);
 
-
+  // Set up source application
   appSource->SetStartTime (Seconds(2));
   appSource->SetStopTime (Seconds (simTime));
   Ipv4Address dest_ip2 ("10.1.1.1");
@@ -102,11 +102,11 @@ int main (int argc, char *argv[])
   Ipv4Address my_addr2 ("10.1.1.2");
   appSource->SetMyAddr (my_addr2);
 
-  
+
   //install one application at node 0, and the other at node 1
   nodes.Get(0)->AddApplication (appSink);
   nodes.Get(1)->AddApplication (appSource);
-  
+
 
 
   LogComponentEnable ("SourceApplication", LOG_LEVEL_ALL);

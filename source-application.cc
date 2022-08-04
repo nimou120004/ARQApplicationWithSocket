@@ -49,6 +49,7 @@ namespace ns3
     m_port1 = 7777;
     m_port2 = 9999;
     m_packet_size = 1000;
+    m_number_of_packets_to_send = 50;
 
   }
 
@@ -82,8 +83,11 @@ namespace ns3
 
   void SourceApplication::StartApplication()
   {
+
+    Ptr<UniformRandomVariable> rand = CreateObject<UniformRandomVariable> ();
+    m_random_offset = MicroSeconds (rand->GetValue(2,10));
     //Receive sockets
-    NS_LOG_FUNCTION("Start source application ...");
+    NS_LOG_FUNCTION("Start application ... " << m_my_addr);
 
 
     TypeId tid = TypeId::LookupByName("ns3::UdpSocketFactory");
@@ -91,16 +95,32 @@ namespace ns3
     //m_recv_socket2 = Socket::CreateSocket(GetNode(), tid);
 
     SetupReceiveSocket(m_recv_socket1, m_my_addr, m_port1);
-    //SetupReceiveSocket(m_recv_socket2, m_port2);
+    //SetupReceiveSocket(m_recv_socket2, m_my_addr, m_port2);
 
     //Send Socket
     m_send_socket = Socket::CreateSocket(GetNode(), tid);
 
-    Simulator::Schedule(Seconds (2), &SourceApplication::SendPacket, this);
+    //If the application of node source, then sendPacket will be scheduled
+    if(this->m_my_addr == ("10.1.1.2")){
+        for(int i = 0; i < 100; i++){
+            Ptr <Packet> packet = Create <Packet> (m_packet_size);
+            PacketDataTag tag;
+            tag.SetSeqNumber (i);
+            tag.SetTimestamp (Now ());
+            packet->AddPacketTag (tag);
+            this->SendPacket (packet);
+            //Simulator::Schedule(Seconds (3), &SourceApplication::SendPacket, this, packet); //, dest_ip, 7777);
 
-   // m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadOne, this));
-   // m_recv_socket2->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
+            }
 
+
+      }
+
+    //If the application of node sink, then the Handle packet method will be called
+
+        m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadOne, this));
+
+        //m_recv_socket2->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
 
 
   }
@@ -118,9 +138,10 @@ namespace ns3
       {
         if(packet->PeekPacketTag (tag)){
 
-            NS_LOG_INFO(TEAL_CODE << "HandleReadOne: node " << GetNode ()->GetId ()<< " Received a Packet of size: " << packet->GetSize()
-                    << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
-                    << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << " seq-number: " << tag.GetSeqNumber () << END_CODE);
+            NS_LOG_INFO(TEAL_CODE << "HandleReadOne: node " << GetNode ()->GetId ()<< " Received " << packet->GetSize() << " bytes"
+                    << " at time " << Now().GetSeconds ()<< " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
+                    << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << " timestimp "
+                    << tag.GetTimestamp () << " seq-number: " << tag.GetSeqNumber () << END_CODE);
         }else {
             NS_LOG_INFO(PURPLE_CODE << "HandleReadOne: node " << GetNode ()->GetId ()<< " Received a Packet of size: " << packet->GetSize()
                   << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
@@ -155,24 +176,15 @@ namespace ns3
       }
   }
 
-  void SourceApplication::SendPacket()
+  void SourceApplication::SendPacket(Ptr<Packet> packet)
   {
 
-    NS_LOG_FUNCTION (this << m_my_addr << m_port1 );
-
-    for(int i = 0; i< 50 ; i++){
-        Ptr <Packet> packet = Create <Packet> (m_packet_size);
-        PacketDataTag tag;
-        tag.SetSeqNumber (i);
-        packet->AddPacketTag (tag);
-        m_send_socket->Connect(InetSocketAddress(m_my_addr, m_port1));
-
-        m_send_socket->Send(packet);
+    //NS_LOG_FUNCTION (this << m_my_addr << m_port1 );
 
 
-      }
-    Simulator::Schedule(Seconds (3), &SourceApplication::SendPacket, this);
-
+    m_send_socket->Connect(InetSocketAddress(m_destination_addr, m_port1));
+    m_send_socket->Send(packet);
+    //Simulator::Schedule(Seconds (3), &SourceApplication::SendPacket, this, packet); //, dest_ip, 7777);
   }
 
 } // namespace ns3
