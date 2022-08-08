@@ -3,6 +3,9 @@
 #include "ns3/socket.h"
 #include "ns3/application.h"
 #include "packet-data-tag.h"
+#include <list>
+#include <algorithm>
+#include <iostream>
 
 
 
@@ -32,9 +35,14 @@ namespace ns3
       */
       void SendPacket (Ptr<Packet> packet);
 
-      /** \brief return a custom packet with Arq header
+      /** \brief Send nack packet. This creates a new socket every time (not the best solution)
       */
-      // Ptr<Packet> CostumePacket (uint32_t sequenceNumber);
+      void SendNack (uint32_t seq_number);
+
+
+      bool findPrev(uint32_t prev);
+
+
 
       void SetDestinationAddr(Ipv4Address dest_addr);
       Ipv4Address GetDestinationAddr();
@@ -45,8 +53,10 @@ namespace ns3
       Time m_random_offset;
 
       Time m_send_time; /**< How often do you broadcast messages */
+      std::list<uint32_t> prevlist; /**< A list of requested packets*/
 
 
+      uint32_t exp; /**< Sequence number of expected packet */
 
     private:
 
@@ -67,6 +77,9 @@ namespace ns3
       uint32_t m_number_of_packets_to_send;
 
 
+
+
+      uint32_t prev; /**< Sequence number of the previous received packet */
 
       Ptr<Socket> m_send_socket; /**< A socket to listen on a specific port */
   };
