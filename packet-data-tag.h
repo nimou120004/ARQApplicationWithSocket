@@ -31,12 +31,17 @@ public:
 	Time GetTimestamp ();
 	uint32_t GetSeqNumber();
 	Address GetSenderAddr();
+	int GetpacketId();
+	int GetNumberOfRepeat();
+
 
 	void SetPosition (Vector pos);
 	void SetNodeId (uint32_t node_id);
 	void SetTimestamp (Time t);
 	void SetSeqNumber (uint32_t seq_number);
 	void SetSenderAddr(Address sender_address);
+	void SetPacketId(int pkt_id);
+	void SetNumberOfRepeat(int nr);
 
 
 	PacketDataTag();
@@ -48,11 +53,16 @@ private:
 	/** Current position */
 	Vector m_currentPosition;
 	/** Timestamp this tag was created */
-	Time m_timestamp;
+	Time timestamp;
 	/** Sequence number of the packet*/
 	uint32_t seq_number;
 	/** Sender Address*/
 	Address sender_addr;
+	/** packet id */
+	int packet_id;
+	/** number of retransmission*/
+	int number_of_repeat;
+
 
 
 };

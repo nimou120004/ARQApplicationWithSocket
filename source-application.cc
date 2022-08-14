@@ -9,9 +9,7 @@
 #include "ns3/udp-header.h"
 #include "packet-data-tag.h"
 #include "nack-data-tag.h"
-#include <list>
-#include <algorithm>
-#include <iostream>
+#include "socket_io.h"
 
 
 
@@ -55,6 +53,9 @@ namespace ns3
     m_packet_size = 1000;
     m_number_of_packets_to_send = 50;
     prev = exp = 0;
+    isStarted = false;
+    starttime = 0;
+    gal_pn = 0;
 
   }
 
@@ -104,8 +105,8 @@ namespace ns3
     //Send Socket
     m_send_socket = Socket::CreateSocket(GetNode(), tid);
 
+   // this->check_udp_socket ();
     //If the application of node source, then sendPacket will be scheduled
-    if(this->m_my_addr == ("10.1.1.2")){
         for(int i = 1, j = 2; i <= 3; i+=j){
             Ptr <Packet> packet = Create <Packet> (m_packet_size);
             PacketDataTag tag;
@@ -117,90 +118,40 @@ namespace ns3
 
           }
 
-
-      }
-
-    if(this->m_my_addr == ("10.1.1.1")){
-        //If the application of node sink, then the Handle packet method will be called
-
-        m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadOne, this));
-
-        //m_recv_socket2->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
-
-
-      }
-
-    if(this->m_my_addr == ("10.1.1.2")){
-        //If the application of node sink, then the Handle packet method will be called
-
-        //m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
-
-        m_recv_socket2->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
-
-
-      }
-
-
-
-
+        m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
+      //m_recv_socket2->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
 
 
   }
 
-  void SourceApplication::HandleReadOne(Ptr<Socket> socket)
+  int SourceApplication::check_udp_socket ()
   {
-    //NS_LOG_FUNCTION(this << socket);
-
-    Ptr<Packet> packet;
-
-    Address from;
-    Address localAddress;
-    PacketDataTag tag;
-
-
-    while ((packet = socket->RecvFrom(from)))
+    if(isStarted == false)
       {
-        if(packet->PeekPacketTag (tag)){
-
-            NS_LOG_INFO(TEAL_CODE << "HandleReadOne: node " << GetNode ()->GetId ()<< " Received " << packet->GetSize() << " bytes"
-                        << " at time " << Now().GetSeconds ()<< " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
-                        << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << " seq-number: " << tag.GetSeqNumber () << END_CODE);
-
-            if(tag.GetSeqNumber () != prev + 1)
-              {
-
-                if (!findPrev (tag.GetSeqNumber ()))  //loss event
-                  {
-                    exp = prev + 1;
-                    NS_LOG_INFO (TEAL_CODE << "Packetloss : expected packet number " << prev + 1 << " but received packet number " << tag.GetSeqNumber ()
-                                 << " nack was sent");
-                    prev = tag.GetSeqNumber ();
-                    prevlist.push_back (exp);
-                    //sqNack = prev + 1;
-                    this->SendNack (exp);
-
-                  }
-                else //this is a requested packet
-                  {
-                    NS_LOG_INFO (TEAL_CODE << "Packet recovery : recovered packet n " << tag.GetSeqNumber () );
-                    prevlist.remove (tag.GetSeqNumber ());
-
-                  }
-
-              }
-            else
-              {
-                prev++;
-              }
-          }
-        else
-          {
-            NS_LOG_INFO(PURPLE_CODE << "HandleReadOne: node " << GetNode ()->GetId ()<< " Received a Packet of size: " << packet->GetSize()
-                        << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
-                        << " port " <<InetSocketAddress::ConvertFrom (from).GetPort ()
-                        << END_CODE);
-          }
+        if (starttime == 0)
+        {
+            struct timespec tp;
+            clock_gettime(CLOCK_MONOTONIC, &tp);
+            starttime = tp.tv_nsec;
+        }
+        isStarted = true;
       }
+    for (int i = 0; i<= m_number_of_packets_to_send; i++)
+      {
+        Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
+        PacketDataTag tag;
+        tag.packet_id = 7; // IDM_UDP_ARQ_VIDEO;
+        tag.number_of_repeat = 0;
+        if(gal_pn == MAX_PN) gal_pn = 0; else gal_pn++;
+        tag.seq_number = gal_pn;
+        tag.timestamp = Simulator::Now ();
+        packet->AddPacketTag (tag);
+        this->SendPacket (packet);
+      }
+
+
+
+    return EXIT_SUCCESS;
   }
 
   void SourceApplication::HandleReadTwo(Ptr<Socket> socket)
@@ -245,22 +196,6 @@ namespace ns3
     //Simulator::Schedule(Seconds (3), &SourceApplication::SendPacket, this, packet); //, dest_ip, 7777);
   }
 
-
-  void SourceApplication::SendNack (uint32_t seq_number)
-  {
-
-    //NS_LOG_FUNCTION (this << m_my_addr << m_port1 );
-    Ptr<Packet> nack = Create<Packet>(80);
-    NackDataTag tag;
-    tag.SetNodeId (this->GetNode ()->GetId ());
-    tag.SetTimestamp (Now ());
-    tag.SetSeqNumber (seq_number);
-    nack->AddPacketTag (tag);
-
-    m_send_socket->Connect(InetSocketAddress(m_destination_addr, m_port2));
-    m_send_socket->Send(nack);
-    //Simulator::Schedule(Seconds (3), &SourceApplication::SendPacket, this, packet); //, dest_ip, 7777);
-  }
 
   bool SourceApplication::findPrev(uint32_t prev){
 

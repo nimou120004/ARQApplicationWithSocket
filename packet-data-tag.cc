@@ -1,9 +1,3 @@
-/*
- * cacc-data-tag.cc
- *
- *  Created on: Oct 29, 2019
- *      Author: adil
- */
 #include "packet-data-tag.h"
 #include "ns3/log.h"
 #include "ns3/simulator.h"
@@ -14,11 +8,11 @@ NS_LOG_COMPONENT_DEFINE("PacketDataTag");
 NS_OBJECT_ENSURE_REGISTERED (PacketDataTag);
 
 PacketDataTag::PacketDataTag() {
-	m_timestamp = Simulator::Now();
+	timestamp = Simulator::Now();
 	m_nodeId = -1;
 }
 PacketDataTag::PacketDataTag(uint32_t node_id) {
-	m_timestamp = Simulator::Now();
+	timestamp = Simulator::Now();
 	m_nodeId = node_id;
 }
 
@@ -54,7 +48,7 @@ uint32_t PacketDataTag::GetSerializedSize (void) const
 void PacketDataTag::Serialize (TagBuffer i) const
 {
 	//we store timestamp first
-	i.WriteDouble(m_timestamp.GetDouble());
+	i.WriteDouble(timestamp.GetDouble());
 
 	//then we store the position
 	i.WriteDouble (m_currentPosition.x);
@@ -66,13 +60,16 @@ void PacketDataTag::Serialize (TagBuffer i) const
 
 	//Then packet sequence number
 	i.WriteU32 (seq_number);
+	i.WriteU32 (packet_id);
+	i.WriteU32(number_of_repeat);
+
 }
 /** This function reads data from a buffer and store it in class's instance variables.
  */
 void PacketDataTag::Deserialize (TagBuffer i)
 {
 	//We extract what we stored first, so we extract the timestamp
-	m_timestamp =  Time::FromDouble (i.ReadDouble(), Time::NS);;
+	timestamp =  Time::FromDouble (i.ReadDouble(), Time::NS);;
 
 	//Then the position
 	m_currentPosition.x = i.ReadDouble();
@@ -83,13 +80,16 @@ void PacketDataTag::Deserialize (TagBuffer i)
 	//Then we extract the packet sequnce number
 	seq_number = i.ReadU32 ();
 
+	packet_id = i.ReadU32 ();
+	number_of_repeat = i.ReadU32 ();
+
 }
 /**
  * This function can be used with ASCII traces if enabled. 
  */
 void PacketDataTag::Print (std::ostream &os) const
 {
-  os << "Custom Data --- Node :" << m_nodeId <<  "\t(" << m_timestamp  << ")" << " Pos (" << m_currentPosition << ")"
+  os << "Custom Data --- Node :" << m_nodeId <<  "\t(" << timestamp  << ")" << " Pos (" << m_currentPosition << ")"
      << "packet seq_number: " << seq_number;
 }
 
@@ -110,11 +110,11 @@ void PacketDataTag::SetPosition(Vector pos) {
 }
 
 Time PacketDataTag::GetTimestamp() {
-	return m_timestamp;
+	return timestamp;
 }
 
 void PacketDataTag::SetTimestamp(Time t) {
-	m_timestamp = t;
+	timestamp = t;
 }
 
 uint32_t PacketDataTag::GetSeqNumber (){
@@ -130,6 +130,20 @@ Address PacketDataTag::GetSenderAddr (){
 }
 void PacketDataTag::SetSenderAddr (Address sender_address){
         sender_addr = sender_address;
+}
+
+int PacketDataTag::GetpacketId (){
+        return packet_id;
+}
+void PacketDataTag::SetPacketId (int pkt_id){
+        packet_id = pkt_id;
+}
+
+int PacketDataTag::GetNumberOfRepeat (){
+        return number_of_repeat;
+}
+void PacketDataTag::SetNumberOfRepeat (int nr){
+        number_of_repeat = nr;
 }
 
 

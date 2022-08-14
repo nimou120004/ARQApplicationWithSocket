@@ -82,7 +82,7 @@ int main (int argc, char *argv[])
 
 
   //Create our Two UDP applications sink and source
-  Ptr <SourceApplication> appSink = CreateObject <SourceApplication> ();
+  Ptr <SinkApplication> appSink = CreateObject <SinkApplication> ();
   Ptr <SourceApplication> appSource = CreateObject <SourceApplication> ();
 
 
@@ -110,6 +110,7 @@ int main (int argc, char *argv[])
 
 
   LogComponentEnable ("SourceApplication", LOG_LEVEL_ALL);
+  LogComponentEnable ("SinkApplication", LOG_LEVEL_ALL);
 
   Simulator::Stop (Seconds (simTime));
   Simulator::Run ();

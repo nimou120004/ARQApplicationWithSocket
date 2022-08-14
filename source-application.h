@@ -3,9 +3,8 @@
 #include "ns3/socket.h"
 #include "ns3/application.h"
 #include "packet-data-tag.h"
-#include <list>
 #include <algorithm>
-#include <iostream>
+
 
 
 
@@ -23,9 +22,6 @@ namespace ns3
       static TypeId GetTypeId ();
       virtual TypeId GetInstanceTypeId () const;
 
-      /** \brief handles incoming packets on port 7777
-       */
-      void HandleReadOne (Ptr<Socket> socket);
 
       /** \brief handles incoming packets on port 9999
        */
@@ -35,12 +31,13 @@ namespace ns3
       */
       void SendPacket (Ptr<Packet> packet);
 
-      /** \brief Send nack packet. This creates a new socket every time (not the best solution)
+      /** \brief check if the packet with prev sequnce number exist in playback buffer
       */
-      void SendNack (uint32_t seq_number);
-
-
       bool findPrev(uint32_t prev);
+
+      /** \brief handle the transmission and processing of data packets
+      */
+      int check_udp_socket();
 
 
 
@@ -74,7 +71,7 @@ namespace ns3
       Ipv4Address m_destination_addr;
       Ipv4Address m_my_addr;
 
-      uint32_t m_number_of_packets_to_send;
+      int m_number_of_packets_to_send;
 
 
 
@@ -82,6 +79,12 @@ namespace ns3
       uint32_t prev; /**< Sequence number of the previous received packet */
 
       Ptr<Socket> m_send_socket; /**< A socket to listen on a specific port */
+
+      bool isStarted; /**< isStarted==true when first packet has created */
+      long starttime; /**< time when first packet generated, it is used also to calculate average PLR */
+      unsigned long gal_pn; /**< global sequence number of packet for arq */
+
+
   };
 }
 
