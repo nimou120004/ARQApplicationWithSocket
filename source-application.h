@@ -3,6 +3,8 @@
 #include "ns3/socket.h"
 #include "ns3/application.h"
 #include "packet-data-tag.h"
+#include "playback_buffer.h"
+#include "gilbert_elliott.h"
 #include <algorithm>
 
 
@@ -66,7 +68,8 @@ namespace ns3
       Ptr<Socket> m_recv_socket2; /**< A socket to receive on a specific port */
       uint16_t m_port1;
       uint16_t m_port2;
-      uint32_t m_packet_size;
+      double ploss, lb; // packet loss rate and burst loss for Gilbert-Elliott model
+
      // Ptr<MyHeader> arqHeader;
       Ipv4Address m_destination_addr;
       Ipv4Address m_my_addr;
@@ -82,8 +85,10 @@ namespace ns3
 
       bool isStarted; /**< isStarted==true when first packet has created */
       long starttime; /**< time when first packet generated, it is used also to calculate average PLR */
-      unsigned long gal_pn; /**< global sequence number of packet for arq */
+      uint32_t gal_pn; /**< global sequence number of packet for arq */
 
+      PlaybackBuffer playback_buffer;
+      gilbert_Elliott g; // Gilbert-Elliott model for burst error (loss)
 
   };
 }

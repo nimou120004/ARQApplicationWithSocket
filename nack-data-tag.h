@@ -29,26 +29,70 @@ public:
 	uint32_t GetNodeId();
 	Time GetTimestamp ();
 	uint32_t GetSeqNumber();
+	uint32_t GetPacketId();
+	uint32_t GetNumberOfRepeat();
+	int GetAmountOfBurst();
+	unsigned char GetTreeNumber ();
 
 	void SetPosition (Vector pos);
 	void SetNodeId (uint32_t node_id);
 	void SetTimestamp (Time t);
-	void SetSeqNumber (uint_fast32_t seq_number);
-
+	void SetSeqNumber (uint32_t seq_nbr);
+	void SetPacketId (uint32_t pkt_id);
+	void SetNumberOfRepeat (uint32_t number_of_rpt);
+	void SetAmountOfBurst (int amount_of_brst);
+	void SetTreeNumber (unsigned char tree_number);
 
 
 	NackDataTag();
-	NackDataTag(uint32_t node_id);
 	virtual ~NackDataTag();
+
+	/** list of first sequence numbers of each burst */
+	uint8_t *burst_first_sn;
+
+
+	/** list of lengths of the burst */
+	uint8_t *bursts_length;
+
+	int put_uchar (uint8_t *bfr, int n, unsigned char x);
+	int put_ulong (uint8_t *bfr, int n, unsigned long x);
+
+
+
 private:
 
-	uint32_t m_nodeId;
-	/** Current position */
+
 	Vector m_currentPosition;
+
+	uint32_t seq_number;
+
 	/** Timestamp this tag was created */
 	Time m_timestamp;
-	/** Sequence number of the packet*/
-	uint32_t seq_number;
+
+	/** node id */
+	uint32_t m_nodeId;
+
+	/** packet id */
+	uint32_t packet_id;
+
+	/** number of retransmission */
+	uint32_t number_of_repeat;
+
+	/** amount of burst */
+	int amount_of_burst;
+
+	/** tree number of this arq line */
+	unsigned char nt;
+
+
+
+
+
+
+
+
+
+
 
 };
 }

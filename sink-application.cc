@@ -9,6 +9,7 @@
 #include "ns3/udp-header.h"
 #include "packet-data-tag.h"
 #include "nack-data-tag.h"
+#include "socket_io.h"
 
 
 
@@ -49,11 +50,36 @@ namespace ns3
   //Constructor
   SinkApplication::SinkApplication()
   {
+
     m_port1 = 7777;
     m_port2 = 9999;
     m_packet_size = 1000;
     m_number_of_packets_to_send = 50;
     prev = exp = 0;
+    isArqEnabled = true;
+    ploss = 0;
+    lb = 0;
+    skt_io = new Socket_io;
+    for (int i = 0; i < MTR; i++)
+      {
+        if (!isArqEnabled)
+          al[i].isActive=false;
+        al[i].nt = i;
+      }
+    my_peer = new Socket_io::MyPeer;
+    my_peer->n = 0;
+    for (int i = 0; i < MTR; i++)
+      {
+        my_peer->child[i] = NULL;
+        my_peer->parent[i] = new Socket_io::MyPeer;
+        my_peer->parent[i]->ping_n = 0;
+        my_peer->parent[i]->ping_t = skt_io->GetTickCount ();
+      }
+    for (int i = 0; i < MTR; i++)
+      {
+        g[i].initGilbert_Elliott (ploss, lb);
+      }
+    ctrl_c.init_c (ploss);
 
   }
 
@@ -115,7 +141,6 @@ namespace ns3
     //NS_LOG_FUNCTION(this << socket);
 
     Ptr<Packet> packet;
-
     Address from;
     Address localAddress;
     PacketDataTag tag;
@@ -123,37 +148,59 @@ namespace ns3
 
     while ((packet = socket->RecvFrom(from)))
       {
-        if(packet->PeekPacketTag (tag)){
-
-            NS_LOG_INFO(TEAL_CODE << "HandleReadOne: node " << GetNode ()->GetId ()<< " Received " << packet->GetSize() << " bytes"
-                        << " at time " << Now().GetSeconds ()<< " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
-                        << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << " seq-number: " << tag.GetSeqNumber () << END_CODE);
-
-            if(tag.GetSeqNumber () != prev + 1)
+        if(packet->PeekPacketTag (tag))
+          {
+            if (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO && packet != NULL)
               {
-
-                if (!findPrev (tag.GetSeqNumber ()))  //loss event
+                printf(".");
+                pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
+                int nt = MTR; // ree number of current packet for this peer. in this case, always equals to 1
+                pbb.new_packet_tag.seq_number = tag.GetSeqNumber ();
+                pbb.new_packet_tag.next = NULL;
+                pbb.new_packet_tag.nodeId = tag.GetNodeId ();
+                pbb.new_packet_tag.packet_id = tag.GetpacketId ();
+                //pbb.new_packet_tag.sender_addr =
+                pbb.new_packet_tag.timestamp = tag.GetTimestamp ();
+                NS_LOG_INFO(TEAL_CODE << "HandleReadOne: node " << GetNode ()->GetId ()<< " Received " << packet->GetSize() << " bytes"
+                            << " at time " << Now().GetSeconds ()<< " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
+                            << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << " seq-number: " << tag.GetSeqNumber () << END_CODE);
+                if(pbb.add_packet_tag (&pbb.new_packet_tag) == EXIT_SUCCESS)
                   {
-                    exp = prev + 1;
-                    NS_LOG_INFO (TEAL_CODE << "Packetloss : expected packet number " << prev + 1 << " but received packet number " << tag.GetSeqNumber ()
-                                 << " nack was sent");
-                    prev = tag.GetSeqNumber ();
-                    prevlist.push_back (exp);
-                    //sqNack = prev + 1;
-                    this->SendNack (exp);
+                    if(my_peer->child[nt] != NULL)
+                      {
+                        if (g[nt].getState ())
+                          {
+                            // some code to forward to packet to the next peer in case of tree topology
+                          }
+                      }
+                  }
+                if (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO)
+                  {
+                    if ((al[MTR].isActive) && (!al[MTR].isStarted))
+                    {
+                        al[MTR].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                        al[MTR].isStarted = true;
+                    }
+
+                    my_peer->parent[MTR]->ping_n = 0;//a number of activity requests (if ping_n=0 then OK)
+                    my_peer->parent[MTR]->ping_t = skt_io->GetTickCount();
 
                   }
-                else //this is a requested packet
-                  {
-                    NS_LOG_INFO (TEAL_CODE << "Packet recovery : recovered packet n " << tag.GetSeqNumber () );
-                    prevlist.remove (tag.GetSeqNumber ());
+                if ((al[MTR].isActive) && (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO))
+                {
+                    //arq lines for packets with "nt" from 0 to mtratio-1
+                    al[MTR].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                    if (al[MTR].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                        al[MTR].check();
+                    for (int i=0 ;i < MTR; i++)
+                        if (al[i].isActive)
+                          {
+                            Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                            NackDataTag nack_tag;
+                            al[i].send_nack(m_destination_addr, m_port1, &ctrl_c, nack, nack_tag, m_send_socket);
+                          }
+                }
 
-                  }
-
-              }
-            else
-              {
-                prev++;
               }
           }
         else
@@ -165,9 +212,6 @@ namespace ns3
           }
       }
   }
-
-
-
 
 
   void SinkApplication::SendNack (uint32_t seq_number)

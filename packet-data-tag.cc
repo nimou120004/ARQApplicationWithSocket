@@ -40,7 +40,8 @@ TypeId PacketDataTag::GetInstanceTypeId (void) const
  */
 uint32_t PacketDataTag::GetSerializedSize (void) const
 {
-        return sizeof(Vector) + sizeof (ns3::Time) + sizeof(uint32_t) + sizeof(uint32_t);
+        return sizeof(Vector) + sizeof (ns3::Time) + sizeof(uint32_t) +
+            sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t);
 }
 /**
  * The order of how you do Serialize() should match the order of Deserialize()
@@ -101,6 +102,7 @@ uint32_t PacketDataTag::GetNodeId() {
 void PacketDataTag::SetNodeId(uint32_t node_id) {
 	m_nodeId = node_id;
 }
+/*
 Vector PacketDataTag::GetPosition(void) {
 	return m_currentPosition;
 }
@@ -108,6 +110,7 @@ Vector PacketDataTag::GetPosition(void) {
 void PacketDataTag::SetPosition(Vector pos) {
 	m_currentPosition = pos;
 }
+*/
 
 Time PacketDataTag::GetTimestamp() {
 	return timestamp;
@@ -125,12 +128,12 @@ void PacketDataTag::SetSeqNumber (uint32_t seq_nbr){
 	seq_number = seq_nbr;
 }
 
-Address PacketDataTag::GetSenderAddr (){
-        return sender_addr;
-}
-void PacketDataTag::SetSenderAddr (Address sender_address){
-        sender_addr = sender_address;
-}
+//Address PacketDataTag::GetSenderAddr (){
+//        return sender_addr;
+//}
+//void PacketDataTag::SetSenderAddr (Address sender_address){
+//        sender_addr = sender_address;
+//}
 
 int PacketDataTag::GetpacketId (){
         return packet_id;

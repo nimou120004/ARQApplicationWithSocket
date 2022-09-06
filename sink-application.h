@@ -4,7 +4,11 @@
 #include "ns3/application.h"
 #include "packet-data-tag.h"
 #include "nack-data-tag.h"
+#include "arq_line_socket.h"
 #include <algorithm>
+#include "playback_buffer.h"
+#include "socket_io.h"
+#include "gilbert_elliott.h"
 
 
 
@@ -27,21 +31,18 @@ namespace ns3
        */
       void HandleReadOne (Ptr<Socket> socket);
 
-
-
       /** \brief Send nack packet. This creates a new socket every time (not the best solution)
       */
       void SendNack (uint32_t seq_number);
 
-
       bool findPrev(uint32_t prev);
 
-
-
       void SetDestinationAddr(Ipv4Address dest_addr);
+
       Ipv4Address GetDestinationAddr();
 
       void SetMyAddr(Ipv4Address my_addr);
+
       Ipv4Address GetMyAddr();
 
       Time m_random_offset;
@@ -51,6 +52,11 @@ namespace ns3
 
 
       uint32_t exp; /**< Sequence number of expected packet */
+      bool isArqEnabled;
+
+      Socket_io *skt_io;
+      Socket_io::MyPeer *my_peer;
+
 
     private:
 
@@ -67,15 +73,14 @@ namespace ns3
      // Ptr<MyHeader> arqHeader;
       Ipv4Address m_destination_addr;
       Ipv4Address m_my_addr;
-
       uint32_t m_number_of_packets_to_send;
-
-
-
-
       uint32_t prev; /**< Sequence number of the previous received packet */
-
       Ptr<Socket> m_send_socket; /**< A socket to listen on a specific port */
+      arq_line_socket al[MTR]; /**< arq lines for each parent peer */
+      PlaybackBuffer pbb; /**< playback buffer for reordering received packets */
+      gilbert_Elliott g[MTR];  /** < Gilbert model for packet loss simulation */
+      double ploss, lb; /** < packet loss rate and burst loss for Gilbert-Elliott model */
+      simple_c ctrl_c; /** < control channel model */
   };
 }
 

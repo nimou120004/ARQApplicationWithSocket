@@ -50,12 +50,14 @@ namespace ns3
   {
     m_port1 = 7777;
     m_port2 = 9999;
-    m_packet_size = 1000;
-    m_number_of_packets_to_send = 50;
+    m_number_of_packets_to_send = 10;
     prev = exp = 0;
     isStarted = false;
     starttime = 0;
     gal_pn = 0;
+    ploss = 0;
+    lb = 0;
+    g.initGilbert_Elliott (ploss, lb);
 
   }
 
@@ -105,22 +107,10 @@ namespace ns3
     //Send Socket
     m_send_socket = Socket::CreateSocket(GetNode(), tid);
 
-   // this->check_udp_socket ();
-    //If the application of node source, then sendPacket will be scheduled
-        for(int i = 1, j = 2; i <= 3; i+=j){
-            Ptr <Packet> packet = Create <Packet> (m_packet_size);
-            PacketDataTag tag;
-            tag.SetSeqNumber (i);
-            tag.SetTimestamp (Now ());
-            packet->AddPacketTag (tag);
-            this->SendPacket (packet);
-           // Simulator::Schedule(Seconds (2), &SourceApplication::SendPacket, this, packet); //, dest_ip, 7777);
-
-          }
-
-        m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
-      //m_recv_socket2->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
-
+    m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
+    //m_recv_socket2->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
+    Simulator::Schedule(Seconds (4), &SourceApplication::check_udp_socket, this);
+    //this->check_udp_socket ();
 
   }
 
@@ -136,26 +126,39 @@ namespace ns3
         }
         isStarted = true;
       }
-    for (int i = 0; i<= m_number_of_packets_to_send; i++)
+    for (int i = 0; i< m_number_of_packets_to_send; i++)
       {
         Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
         PacketDataTag tag;
-        tag.packet_id = 7; // IDM_UDP_ARQ_VIDEO;
-        tag.number_of_repeat = 0;
+        tag.SetNumberOfRepeat (0);
+        //tag.SetPosition (NULL);
+        tag.SetNodeId (GetNode ()->GetId ());
+        tag.SetPacketId (IDM_UDP_ARQ_VIDEO);
+        //tag.SetSenderAddress(NULL);
         if(gal_pn == MAX_PN) gal_pn = 0; else gal_pn++;
-        tag.seq_number = gal_pn;
-        tag.timestamp = Simulator::Now ();
+        tag.SetSeqNumber (gal_pn);
+        tag.SetTimestamp (Simulator::Now ());
         packet->AddPacketTag (tag);
-        this->SendPacket (packet);
+
+        if (g.getState ())
+          {
+              this->SendPacket (packet);
+              printf (".");
+          }
+        else
+          {
+            printf ("l");
+          }
+
+
       }
-
-
 
     return EXIT_SUCCESS;
   }
 
   void SourceApplication::HandleReadTwo(Ptr<Socket> socket)
   {
+
     //NS_LOG_FUNCTION(this << socket);
     Ptr<Packet> packet;
     Address from;
@@ -169,7 +172,7 @@ namespace ns3
                         << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
                         << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << END_CODE);
 
-            Ptr <Packet> packet = Create <Packet> (m_packet_size);
+            Ptr <Packet> packet = Create <Packet> (MTU_SIZE);
             PacketDataTag packet_tag;
             packet_tag.SetSeqNumber (tag.GetSeqNumber ());
             packet_tag.SetTimestamp (Now ());

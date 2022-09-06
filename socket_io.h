@@ -10,9 +10,10 @@
 #include <iostream>
 
 
-#define MAX_PACKET_NUMBER  0xFFFFFFFF
+#define MAX_PACKET_NUMBER  0xFFFFFFFF //4294967295
 
-#define MTU_SIZE        1500 //maximum transmission unit
+#define MTU_SIZE        1000 //maximum transmission unit
+#define MTU_NACK_SIZE   90 // maximum transmission unit for NACK packets
 #define VIDEO_CHUNCK_SIZE 188
 #define VIDEO_SIZE      1314 //7*188
 #define RTP_HDR_SIZE    12 //12(rtp_hdr) + 7*188
@@ -21,7 +22,7 @@
 #define FEC_VIDEO_HDR_SIZE 5
 #define FEC_RED_HDR_SIZE   7
 
-#define MAX_PN	0xFFFFFFFF //big int value which is 4294967295.
+#define MAX_PN	10000 //big int value which is 4294967295.
 
 #define MTR				1	//multiple tree ratio
 #define MAX_ACCEPTED_PEERS 100
@@ -61,8 +62,42 @@ namespace ns3
   {
 
   public:
+
     Socket_io();
     unsigned long GetTickCount();
+    struct MyPeer {
+
+        unsigned char           ping_n;// activity request number
+        unsigned char           m;//m = n % MTR
+        unsigned short          n;//peer number in order of connection
+        MyPeer			*child[MTR], //pointers to children structures
+                                    *parent[MTR];//pointers to parents structures
+        unsigned long            ping_t;//last activity time
+        //struct sockaddr_in     addr;//address structure for udp socket
+
+    };
+
+    struct Peer {
+
+            unsigned char			to_delete;	//flag
+        unsigned char           ping_n;     //unconfirmed activity requests number
+        unsigned char           m;			//m = n % mtratio
+        unsigned short          n;			//peer number
+        Peer			*child[MTR], //child peers
+                                    *parent[MTR];//parent peers
+        long            ping_t;       //last ping time
+        long            plr_t;		//arrival time of last plr message
+        float           plr;		//peer packet loss ratio
+        //struct sockaddr_in     addr;  //peer address
+
+    };
+
+    struct Root {
+
+        Peer *child[MTR];
+
+    };
+
   };
 
 

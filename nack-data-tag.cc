@@ -16,11 +16,11 @@ NS_OBJECT_ENSURE_REGISTERED (NackDataTag);
 NackDataTag::NackDataTag() {
 	m_timestamp = Simulator::Now();
 	m_nodeId = -1;
+	burst_first_sn = new uint8_t[20];
+	bursts_length = new uint8_t[20];
+
 }
-NackDataTag::NackDataTag(uint32_t node_id) {
-	m_timestamp = Simulator::Now();
-	m_nodeId = node_id;
-}
+
 
 
 NackDataTag::~NackDataTag() {
@@ -46,42 +46,48 @@ TypeId NackDataTag::GetInstanceTypeId (void) const
  */
 uint32_t NackDataTag::GetSerializedSize (void) const
 {
-        return sizeof(Vector) + sizeof (ns3::Time) + sizeof(uint32_t) + sizeof(uint32_t);
+        return sizeof(Vector) + sizeof(uint32_t) + sizeof (ns3::Time) +
+               sizeof(uint32_t) + sizeof(uint32_t) + sizeof (uint32_t) +
+               sizeof(uint32_t) + sizeof(uint8_t) + sizeof(char[20]) +
+               sizeof(char[20]);
 }
 /**
  * The order of how you do Serialize() should match the order of Deserialize()
  */
 void NackDataTag::Serialize (TagBuffer i) const
 {
-	//we store timestamp first
-	i.WriteDouble(m_timestamp.GetDouble());
-
-	//then we store the position
 	i.WriteDouble (m_currentPosition.x);
 	i.WriteDouble (m_currentPosition.y);
 	i.WriteDouble (m_currentPosition.z);
-
-	//Then we store the node ID
-	i.WriteU32(m_nodeId);
-
-	//Then packet sequence number
 	i.WriteU32 (seq_number);
+	i.WriteDouble(m_timestamp.GetDouble());
+	i.WriteU32(m_nodeId);
+	i.WriteU32 (packet_id);
+	i.WriteU32 (number_of_repeat);
+	i.WriteU32 (amount_of_burst);
+	i.WriteU8 (nt);
+	i.Write (burst_first_sn, 20);
+	i.Write (bursts_length, 20);
+
+
 }
 /** This function reads data from a buffer and store it in class's instance variables.
  */
 void NackDataTag::Deserialize (TagBuffer i)
 {
-	//We extract what we stored first, so we extract the timestamp
-	m_timestamp =  Time::FromDouble (i.ReadDouble(), Time::NS);;
 
-	//Then the position
 	m_currentPosition.x = i.ReadDouble();
 	m_currentPosition.y = i.ReadDouble();
 	m_currentPosition.z = i.ReadDouble();
-	//Then, we extract the node id
-	m_nodeId = i.ReadU32();
-	//Then we extract the packet sequnce number
 	seq_number = i.ReadU32 ();
+	m_timestamp =  Time::FromDouble (i.ReadDouble(), Time::NS);
+	m_nodeId = i.ReadU32();
+	packet_id = i.ReadU32 ();
+	number_of_repeat = i.ReadU32 ();
+	amount_of_burst = i.ReadU32 ();
+	nt = i.ReadU8 ();
+	i.Read(burst_first_sn, 20);
+	i.Read (bursts_length, 20);
 
 }
 /**
@@ -91,6 +97,21 @@ void NackDataTag::Print (std::ostream &os) const
 {
   os << "Custom Data --- Node :" << m_nodeId <<  "\t(" << m_timestamp  << ")" << " Pos (" << m_currentPosition << ")"
      << "packet seq_number: " << seq_number;
+}
+
+int NackDataTag::put_uchar(uint8_t *bfr, int n, unsigned char x)
+{
+  bfr[n] = (unsigned char) x;
+  return EXIT_SUCCESS;
+}
+
+int NackDataTag::put_ulong(uint8_t *bfr, int n, unsigned long x)
+{
+    bfr[n] = (unsigned char) (x >> 24) & 0xFF;
+    bfr[n + 1] = (unsigned char) (x >> 16) & 0xFF;
+    bfr[n + 2] = (unsigned char) (x >> 8) & 0xFF;
+    bfr[n + 3] = (unsigned char) x & 0xFF;
+    return EXIT_SUCCESS;
 }
 
 //Your accessor and mutator functions 
@@ -118,11 +139,51 @@ void NackDataTag::SetTimestamp(Time t) {
 }
 
 uint32_t NackDataTag::GetSeqNumber (){
-	return seq_number;
+  return seq_number;
 }
 
-void NackDataTag::SetSeqNumber (uint_fast32_t seq_nbr){
-	seq_number = seq_nbr;
+uint32_t NackDataTag::GetPacketId()
+{
+  return packet_id;
+}
+
+void NackDataTag::SetSeqNumber (uint32_t seq_nbr){
+  seq_number = seq_nbr;
+}
+
+void NackDataTag::SetPacketId(uint32_t pkt_id)
+{
+    packet_id = pkt_id;
+}
+
+uint32_t NackDataTag::GetNumberOfRepeat()
+{
+  return number_of_repeat;
+}
+
+int NackDataTag::GetAmountOfBurst()
+{
+  return amount_of_burst;
+}
+
+unsigned char NackDataTag::GetTreeNumber()
+{
+  return nt;
+}
+
+void NackDataTag::SetNumberOfRepeat(uint32_t number_of_rpt)
+{
+  number_of_repeat = number_of_rpt;
+}
+
+void NackDataTag::SetAmountOfBurst(int amount_of_brst)
+{
+  amount_of_burst = amount_of_brst;
+}
+
+void NackDataTag::SetTreeNumber(unsigned char tree_number)
+{
+  nt = tree_number;
 }
 
 
