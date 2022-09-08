@@ -105,6 +105,11 @@ int NackDataTag::put_uchar(uint8_t *bfr, int n, unsigned char x)
   return EXIT_SUCCESS;
 }
 
+unsigned char NackDataTag::get_uchar(uint8_t *bfr, int n)
+{
+  return (unsigned char)bfr[n];
+}
+
 int NackDataTag::put_ulong(uint8_t *bfr, int n, unsigned long x)
 {
     bfr[n] = (unsigned char) (x >> 24) & 0xFF;
@@ -113,6 +118,13 @@ int NackDataTag::put_ulong(uint8_t *bfr, int n, unsigned long x)
     bfr[n + 3] = (unsigned char) x & 0xFF;
     return EXIT_SUCCESS;
 }
+
+unsigned long NackDataTag::get_ulong(uint8_t *bfr, int n)
+{
+    return ((unsigned char)bfr[n] << 24) + ((unsigned char)bfr[n + 1] << 16) +
+            ((unsigned char)bfr[n + 2] << 8) + (unsigned char)bfr[n + 3];
+}
+
 
 //Your accessor and mutator functions 
 uint32_t NackDataTag::GetNodeId() {
@@ -166,7 +178,7 @@ int NackDataTag::GetAmountOfBurst()
   return amount_of_burst;
 }
 
-unsigned char NackDataTag::GetTreeNumber()
+uint8_t NackDataTag::GetTreeNumber()
 {
   return nt;
 }
@@ -181,7 +193,7 @@ void NackDataTag::SetAmountOfBurst(int amount_of_brst)
   amount_of_burst = amount_of_brst;
 }
 
-void NackDataTag::SetTreeNumber(unsigned char tree_number)
+void NackDataTag::SetTreeNumber(uint8_t tree_number)
 {
   nt = tree_number;
 }

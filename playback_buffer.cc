@@ -45,6 +45,7 @@ namespace ns3
     to->sender_addr = from->sender_addr;
     to->seq_number = from->seq_number;
     to->timestamp = from->timestamp;
+    to->nt = from->nt;
 
     return EXIT_SUCCESS;
   }
@@ -62,24 +63,24 @@ namespace ns3
       }
   }
 
-//  bool PlaybackBuffer::shift_buffer(int s, sockaddr_in addr, unsigned long &pn)
-//  {
-//     return false;
-//  }
+  //  bool PlaybackBuffer::shift_buffer(int s, sockaddr_in addr, unsigned long &pn)
+  //  {
+  //     return false;
+  //  }
 
   int PlaybackBuffer::delete_first_packet_tag()
   {
     pbb_packet_tag *temp;
     if (first_packet_tag == NULL)
       {
-            length = 0;
-            return EXIT_SUCCESS;
+        length = 0;
+        return EXIT_SUCCESS;
       }
     else if (first_packet_tag->next == NULL)
       {
-            delete(first_packet_tag);
-            length = 0;
-            return EXIT_SUCCESS;
+        delete(first_packet_tag);
+        length = 0;
+        return EXIT_SUCCESS;
       }
     else
       {
@@ -89,53 +90,54 @@ namespace ns3
         first_packet_tag = temp;
         length--;
         if(first_packet_tag == NULL)
-             length = 0;
+          length = 0;
         return EXIT_SUCCESS;
       }
   }
 
-//  int PlaybackBuffer::send_first_packet(int s, sockaddr_in addr)
-//  {
-//    return EXIT_SUCCESS;
-//  }
+  //  int PlaybackBuffer::send_first_packet(int s, sockaddr_in addr)
+  //  {
+  //    return EXIT_SUCCESS;
+  //  }
 
   int PlaybackBuffer::add_packet_tag(PlaybackBuffer::pbb_packet_tag *packet_tag)
   {
+   // NS_LOG_INFO("packet added ");
     pbb_packet_tag    *temp = new pbb_packet_tag,
-                      *cur,
-                      *prev;
+        *cur,
+        *prev;
     if(length == 0)
       {
-          copy_packet_tag (&new_packet_tag, temp);
-          first_packet_tag = temp;
-          last_packet_tag = temp;
+        copy_packet_tag (&new_packet_tag, temp);
+        first_packet_tag = temp;
+        last_packet_tag = temp;
       }
     else if (first_packet_tag->seq_number > packet_tag->seq_number)
       {
-          copy_packet_tag (first_packet_tag, temp);
-          copy_packet_tag (&new_packet_tag, first_packet_tag);
-          first_packet_tag->next = temp;
+        copy_packet_tag (first_packet_tag, temp);
+        copy_packet_tag (&new_packet_tag, first_packet_tag);
+        first_packet_tag->next = temp;
       }
     else if (last_packet_tag->seq_number < packet_tag->seq_number)
       {
-          copy_packet_tag (&new_packet_tag, temp);
-          last_packet_tag->next = temp;
-          last_packet_tag = temp;
+        copy_packet_tag (&new_packet_tag, temp);
+        last_packet_tag->next = temp;
+        last_packet_tag = temp;
       }
     else
       {
-          copy_packet_tag (&new_packet_tag, temp);
-          prev = first_packet_tag;
-          cur = first_packet_tag->next;
-          while ((cur != NULL) && (cur->seq_number < packet_tag->seq_number))
+        copy_packet_tag (&new_packet_tag, temp);
+        prev = first_packet_tag;
+        cur = first_packet_tag->next;
+        while ((cur != NULL) && (cur->seq_number < packet_tag->seq_number))
           {
-                  prev = cur;
-                  cur = prev->next;
+            prev = cur;
+            cur = prev->next;
           }
-          if (cur->seq_number == packet_tag->seq_number)
-                  return EXIT_FAILURE;
-          prev->next = temp;
-          temp->next = cur;
+        if (cur->seq_number == packet_tag->seq_number)
+          return EXIT_FAILURE;
+        prev->next = temp;
+        temp->next = cur;
 
       }
     length++;
@@ -143,80 +145,116 @@ namespace ns3
 
   }
 
-//  int PlaybackBuffer::get_packet_tag_by_p2p_pn(unsigned long p2p_pn, unsigned char nt)
-//  {
-//    return EXIT_SUCCESS;
-//  }
+  //  int PlaybackBuffer::get_packet_tag_by_p2p_pn(unsigned long p2p_pn, unsigned char nt)
+  //  {
+  //    return EXIT_SUCCESS;
+  //  }
 
-//  int PlaybackBuffer::get_pn_by_p2p_pn(unsigned long p2p_pn, unsigned char nt, unsigned long &pn)
-//  {
-//    return EXIT_SUCCESS;
-//  }
+  //  int PlaybackBuffer::get_pn_by_p2p_pn(unsigned long p2p_pn, unsigned char nt, unsigned long &pn)
+  //  {
+  //    return EXIT_SUCCESS;
+  //  }
 
   int PlaybackBuffer::get_packet_tag_by_pn(uint32_t pn)
   {
-        pbb_packet_tag	*cur,
-                                *prev;
-        if (length == 0 || first_packet_tag == NULL)
-        {
-                return EXIT_FAILURE;
-        }
-        else if (first_packet_tag->seq_number > pn)
-        {
-                return EXIT_FAILURE;
-        }
-        else if (first_packet_tag->seq_number == pn)
-        {
-                copy_packet_tag (first_packet_tag, &new_packet_tag);
-                return EXIT_SUCCESS;
-        }
-        else if ((new_packet_tag.next != NULL) && (new_packet_tag.next->seq_number == pn))
-        {
-                copy_packet_tag (new_packet_tag.next, &new_packet_tag);
-                return EXIT_SUCCESS;
-        }
-        else if (last_packet_tag->seq_number < pn)
-        {
-                return EXIT_FAILURE;
-        }
-        else if ((new_packet_tag.next != NULL) && (new_packet_tag.next->seq_number < pn))
-        {
-                prev = new_packet_tag.next;
-                cur = new_packet_tag.next->next;
-                while ((cur != NULL) && (cur->seq_number < pn))
-                {
-                        prev = cur;
-                        cur = prev->next;
-                }
-                if ((cur != NULL) && (cur->seq_number == pn))
-                {
-                        copy_packet_tag (cur, &new_packet_tag);
-                }
-                else
-                {
-                        return EXIT_FAILURE;
-                }
-                return EXIT_SUCCESS;
-        }
+    pbb_packet_tag	*cur,
+        *prev;
+    if (length == 0 || first_packet_tag == NULL)
+      {
+        return EXIT_FAILURE;
+      }
+    else if (first_packet_tag->seq_number > pn)
+      {
+        return EXIT_FAILURE;
+      }
+    else if (first_packet_tag->seq_number == pn)
+      {
+        copy_packet_tag (first_packet_tag, &new_packet_tag);
+        return EXIT_SUCCESS;
+      }
+    else if ((new_packet_tag.next != NULL) && (new_packet_tag.next->seq_number == pn))
+      {
+        copy_packet_tag (new_packet_tag.next, &new_packet_tag);
+        return EXIT_SUCCESS;
+      }
+    else if (last_packet_tag->seq_number < pn)
+      {
+        return EXIT_FAILURE;
+      }
+    else if ((new_packet_tag.next != NULL) && (new_packet_tag.next->seq_number < pn))
+      {
+        prev = new_packet_tag.next;
+        cur = new_packet_tag.next->next;
+        while ((cur != NULL) && (cur->seq_number < pn))
+          {
+            prev = cur;
+            cur = prev->next;
+          }
+        if ((cur != NULL) && (cur->seq_number == pn))
+          {
+            copy_packet_tag (cur, &new_packet_tag);
+          }
         else
-        {
-                prev = first_packet_tag;
-                cur = first_packet_tag->next;
-                while ((cur != NULL) && (cur->seq_number < pn))
-                {
-                        prev = cur;
-                        cur = prev->next;
-                }
-                if ((cur != NULL) && (cur->seq_number == pn))
-                {
-                        copy_packet_tag (cur, &new_packet_tag);
-                }
-                else
-                {
-                        return EXIT_FAILURE;
-                }
-                return EXIT_SUCCESS;
-        }
+          {
+            return EXIT_FAILURE;
+          }
+        return EXIT_SUCCESS;
+      }
+    else
+      {
+        prev = first_packet_tag;
+        cur = first_packet_tag->next;
+        while ((cur != NULL) && (cur->seq_number < pn))
+          {
+            prev = cur;
+            cur = prev->next;
+          }
+        if ((cur != NULL) && (cur->seq_number == pn))
+          {
+            copy_packet_tag (cur, &new_packet_tag);
+          }
+        else
+          {
+            return EXIT_FAILURE;
+          }
+        return EXIT_SUCCESS;
+      }
+  }
+
+  int PlaybackBuffer::get_packet_tag_by_p2p_pn (unsigned long p2p_pn, unsigned char nt)
+  {
+    pbb_packet_tag	*cur,
+        *prev;
+    if (length == 0 || first_packet_tag == NULL)
+      {
+        return EXIT_FAILURE;
+      }
+    else if ((first_packet_tag->nt == nt) && (first_packet_tag->seq_number == p2p_pn))
+      {
+        copy_packet_tag (first_packet_tag, &new_packet_tag);
+        return EXIT_SUCCESS;
+      }
+    else
+      {
+        prev = first_packet_tag;
+        cur = first_packet_tag->next;
+        while (cur != NULL)
+          {
+            if ((cur->nt == nt) && (cur->seq_number == p2p_pn))
+              break;
+            prev = cur;
+            cur = prev->next;
+          }
+        if (cur != NULL)
+          {
+            copy_packet_tag (cur, &new_packet_tag);
+            return EXIT_SUCCESS;
+          }
+        else
+          {
+            return EXIT_FAILURE;
+          }
+      }
   }
 
 

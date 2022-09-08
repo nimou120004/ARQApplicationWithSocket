@@ -33,6 +33,7 @@ public:
 	//Address GetSenderAddr();
 	int GetpacketId();
 	int GetNumberOfRepeat();
+	uint8_t GetTreeNumber();
 
 
 	//void SetPosition (Vector pos);
@@ -42,6 +43,7 @@ public:
 	//void SetSenderAddr(Address sender_address);
 	void SetPacketId(int pkt_id);
 	void SetNumberOfRepeat(int nr);
+	void SetTreeNumber (uint8_t tree_number);
 
 
 	PacketDataTag();
@@ -62,6 +64,8 @@ private:
 	uint32_t packet_id;
 	/** number of retransmission*/
 	uint32_t number_of_repeat;
+	/** tree number of this arq line */
+	uint8_t nt;
 
 
 

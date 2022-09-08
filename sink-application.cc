@@ -154,6 +154,7 @@ namespace ns3
               {
                 printf(".");
                 pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
+                pbb.new_packet_tag.nt = tag.GetTreeNumber ();
                 int nt = MTR; // ree number of current packet for this peer. in this case, always equals to 1
                 pbb.new_packet_tag.seq_number = tag.GetSeqNumber ();
                 pbb.new_packet_tag.next = NULL;
@@ -182,8 +183,8 @@ namespace ns3
                         al[MTR].isStarted = true;
                     }
 
-                    my_peer->parent[MTR]->ping_n = 0;//a number of activity requests (if ping_n=0 then OK)
-                    my_peer->parent[MTR]->ping_t = skt_io->GetTickCount();
+                    //my_peer->parent[MTR]->ping_n = 0;//a number of activity requests (if ping_n=0 then OK)
+                    //my_peer->parent[MTR]->ping_t = skt_io->GetTickCount();
 
                   }
                 if ((al[MTR].isActive) && (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO))

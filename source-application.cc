@@ -55,9 +55,15 @@ namespace ns3
     isStarted = false;
     starttime = 0;
     gal_pn = 0;
-    ploss = 0;
-    lb = 0;
+    ploss = 0.5;
+    lb = 5;
     g.initGilbert_Elliott (ploss, lb);
+    pbb.max_length = MAX_PBBFR_SIZE;
+    root = new Socket_io::Root;
+    for (int i = 0; i < MTR; i++)
+      {
+        root->child[i] = NULL;
+      }
 
   }
 
@@ -109,8 +115,8 @@ namespace ns3
 
     m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
     //m_recv_socket2->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
-    Simulator::Schedule(Seconds (4), &SourceApplication::check_udp_socket, this);
-    //this->check_udp_socket ();
+    //Simulator::Schedule(Seconds (4), &SourceApplication::check_udp_socket, this);
+    this->check_udp_socket ();
 
   }
 
@@ -119,11 +125,11 @@ namespace ns3
     if(isStarted == false)
       {
         if (starttime == 0)
-        {
+          {
             struct timespec tp;
             clock_gettime(CLOCK_MONOTONIC, &tp);
             starttime = tp.tv_nsec;
-        }
+          }
         isStarted = true;
       }
     for (int i = 0; i< m_number_of_packets_to_send; i++)
@@ -131,18 +137,25 @@ namespace ns3
         Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
         PacketDataTag tag;
         tag.SetNumberOfRepeat (0);
-        //tag.SetPosition (NULL);
-        tag.SetNodeId (GetNode ()->GetId ());
-        tag.SetPacketId (IDM_UDP_ARQ_VIDEO);
-        //tag.SetSenderAddress(NULL);
         if(gal_pn == MAX_PN) gal_pn = 0; else gal_pn++;
         tag.SetSeqNumber (gal_pn);
+        tag.SetNodeId (GetNode ()->GetId ());
+        tag.SetPacketId (IDM_UDP_ARQ_VIDEO);
         tag.SetTimestamp (Simulator::Now ());
-        packet->AddPacketTag (tag);
+        tag.SetTreeNumber ((unsigned char)MTR);
 
+        packet->AddPacketTag (tag);
+        pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
+        pbb.new_packet_tag.seq_number = tag.GetSeqNumber ();
+        pbb.new_packet_tag.nodeId = tag.GetNodeId ();
+        pbb.new_packet_tag.packet_id = tag.GetpacketId ();
+        pbb.new_packet_tag.timestamp = tag.GetTimestamp ();
+        pbb.new_packet_tag.nt = tag.GetTreeNumber ();
+        pbb.new_packet_tag.next = NULL;
+        pbb.shift_buffer ();
         if (g.getState ())
           {
-              this->SendPacket (packet);
+            if(this->SendPacket (packet) == EXIT_SUCCESS)
               printf (".");
           }
         else
@@ -150,36 +163,81 @@ namespace ns3
             printf ("l");
           }
 
-
       }
+    Simulator::Schedule(Seconds (4), &SourceApplication::check_udp_socket, this);
 
     return EXIT_SUCCESS;
   }
 
   void SourceApplication::HandleReadTwo(Ptr<Socket> socket)
   {
-
     //NS_LOG_FUNCTION(this << socket);
     Ptr<Packet> packet;
     Address from;
     Address localAddress;
-    NackDataTag tag;
+    NackDataTag nack_tag;
     while ((packet = socket->RecvFrom(from)))
       {
-        if(packet->PeekPacketTag (tag)){
+        if(packet->PeekPacketTag (nack_tag))
+          {
+            if (nack_tag.GetPacketId () == IDM_UDP_ARQ_NACK_AL)
+              {
+                NS_LOG_INFO(PURPLE_CODE << "HandleReadTwo: " << " node " << GetNode ()->GetId () << " Nack received"
+                            << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
+                            << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << END_CODE);
+                uint32_t nack_n = nack_tag.GetNumberOfRepeat ();
+                int nack_bc = nack_tag.GetAmountOfBurst ();
+                unsigned char nack_nt = nack_tag.GetTreeNumber ();
+                for (int i = 0; i < nack_bc; i++)
+                  {
+                    unsigned long nack_pn = nack_tag.get_ulong (nack_tag.bursts_length, i*5);
+                    unsigned char nack_bl = nack_tag.get_uchar (nack_tag.burst_first_sn, i*5 + 4);
+                    unsigned char nack_dwbl = 0;
+                    //unsigned long nack_fpn = nack_pn;
 
-            NS_LOG_INFO(PURPLE_CODE << "HandleReadTwo: " << " node " << GetNode ()->GetId () << " Nack received"
-                        << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
-                        << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << END_CODE);
+                    while (nack_bl > 0)
+                      {
+                        if (pbb.get_packet_tag_by_p2p_pn (nack_pn, nack_nt) == EXIT_SUCCESS)
+                          {
 
-            Ptr <Packet> packet = Create <Packet> (MTU_SIZE);
-            PacketDataTag packet_tag;
-            packet_tag.SetSeqNumber (tag.GetSeqNumber ());
-            packet_tag.SetTimestamp (Now ());
-            packet->AddPacketTag (packet_tag);
-            this->SendPacket (packet);
+                            //fprintf (log_file," p2p_pn=%lu",pbb.new_packet.p2p_pn);
+                            Ptr<Packet> req_packet = Create<Packet>(MTU_SIZE);
+                            PacketDataTag tag;
+                            tag.SetNumberOfRepeat (nack_n);
+                            tag.SetSeqNumber (pbb.new_packet_tag.seq_number);
+                            tag.SetNodeId (pbb.new_packet_tag.nodeId);
+                            tag.SetPacketId (pbb.new_packet_tag.packet_id);
+                            tag.SetTimestamp (pbb.new_packet_tag.timestamp);
+                            tag.SetTreeNumber (pbb.new_packet_tag.nt);
+                            req_packet->AddPacketTag (tag);
+                            if (this->SendPacket (req_packet) == EXIT_SUCCESS)
+                              printf("r");
+                          }
+                        else
+                          nack_dwbl++;
+                        nack_pn++;
+                        nack_bl--;
+                      }//while (nack_bl>0)
 
-          }else {
+                    /*
+                    if (nack_dwbl > 0)
+                      {
+                        put_uc (bfr_out, 0, IDM_UDP_ARQ_DNWM_AL);
+                        put_uc (bfr_out, 1, nack_nt);
+                        put_ul (bfr_out, 2, nack_fpn);
+                        put_uc (bfr_out, 6, nack_dwbl);
+                        if ((bytes_out = sendto(s, bfr_out, 7, 0, (struct sockaddr *) &addr, sizeof(struct sockaddr))) < 0)
+                          fprintf(log_file,"Error %d: can't send message %d to my child.\n", errno, IDM_UDP_ARQ_DNWM_AL);
+                        else
+                          fprintf(log_file,"SENT DNWM sn=%lu fpn=%lu dwbl=%d\n",nack_pn,nack_fpn,nack_dwbl);
+
+                      }
+                    */
+                  }//for (nack.bc)
+
+              }
+          }
+        else {
             NS_LOG_INFO(PURPLE_CODE << "HandleReadTwo: node " << GetNode ()->GetId ()<< " Received a Packet of size: " << packet->GetSize()
                         << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
                         << " port " <<InetSocketAddress::ConvertFrom (from).GetPort ()
@@ -189,13 +247,15 @@ namespace ns3
       }
   }
 
-  void SourceApplication::SendPacket(Ptr<Packet> packet)
+  int SourceApplication::SendPacket(Ptr<Packet> packet)
   {
 
     //NS_LOG_FUNCTION (this << m_my_addr << m_port1 );
 
     m_send_socket->Connect(InetSocketAddress(m_destination_addr, m_port1));
-    m_send_socket->Send(packet);
+    if(m_send_socket->Send(packet)> 0)
+      return EXIT_SUCCESS;
+    else return EXIT_FAILURE;
     //Simulator::Schedule(Seconds (3), &SourceApplication::SendPacket, this, packet); //, dest_ip, 7777);
   }
 

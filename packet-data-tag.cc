@@ -41,7 +41,8 @@ TypeId PacketDataTag::GetInstanceTypeId (void) const
 uint32_t PacketDataTag::GetSerializedSize (void) const
 {
         return sizeof(Vector) + sizeof (ns3::Time) + sizeof(uint32_t) +
-            sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t);
+            sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) +
+            sizeof(uint8_t);
 }
 /**
  * The order of how you do Serialize() should match the order of Deserialize()
@@ -63,6 +64,7 @@ void PacketDataTag::Serialize (TagBuffer i) const
 	i.WriteU32 (seq_number);
 	i.WriteU32 (packet_id);
 	i.WriteU32(number_of_repeat);
+	i.WriteU8 (nt);
 
 }
 /** This function reads data from a buffer and store it in class's instance variables.
@@ -83,6 +85,7 @@ void PacketDataTag::Deserialize (TagBuffer i)
 
 	packet_id = i.ReadU32 ();
 	number_of_repeat = i.ReadU32 ();
+	nt = i.ReadU8 ();
 
 }
 /**
@@ -143,12 +146,22 @@ void PacketDataTag::SetPacketId (int pkt_id){
 }
 
 int PacketDataTag::GetNumberOfRepeat (){
-        return number_of_repeat;
+  return number_of_repeat;
 }
+
 void PacketDataTag::SetNumberOfRepeat (int nr){
         number_of_repeat = nr;
 }
 
+uint8_t PacketDataTag::GetTreeNumber()
+{
+        return nt;
+}
+
+void PacketDataTag::SetTreeNumber (uint8_t tree_number)
+{
+        nt = tree_number;
+}
 
 
 } /* namespace ns3 */

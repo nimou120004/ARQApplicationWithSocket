@@ -31,7 +31,7 @@ namespace ns3
 
       /** \brief Send an outgoing packet. This creates a new socket every time (not the best solution)
       */
-      void SendPacket (Ptr<Packet> packet);
+      int SendPacket (Ptr<Packet> packet);
 
       /** \brief check if the packet with prev sequnce number exist in playback buffer
       */
@@ -87,8 +87,10 @@ namespace ns3
       long starttime; /**< time when first packet generated, it is used also to calculate average PLR */
       uint32_t gal_pn; /**< global sequence number of packet for arq */
 
-      PlaybackBuffer playback_buffer;
-      gilbert_Elliott g; // Gilbert-Elliott model for burst error (loss)
+      PlaybackBuffer pbb; /**< playback buffer for reordering received packets */
+      Socket_io *skt_io;
+      Socket_io::Root *root; /**< my root which is the node from which i sending packets */
+      gilbert_Elliott g; /**< Gilbert-Elliott model for burst error (loss) */
 
   };
 }

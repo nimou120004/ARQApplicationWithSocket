@@ -32,7 +32,7 @@ public:
 	uint32_t GetPacketId();
 	uint32_t GetNumberOfRepeat();
 	int GetAmountOfBurst();
-	unsigned char GetTreeNumber ();
+	uint8_t GetTreeNumber ();
 
 	void SetPosition (Vector pos);
 	void SetNodeId (uint32_t node_id);
@@ -41,7 +41,7 @@ public:
 	void SetPacketId (uint32_t pkt_id);
 	void SetNumberOfRepeat (uint32_t number_of_rpt);
 	void SetAmountOfBurst (int amount_of_brst);
-	void SetTreeNumber (unsigned char tree_number);
+	void SetTreeNumber (uint8_t tree_number);
 
 
 	NackDataTag();
@@ -56,6 +56,9 @@ public:
 
 	int put_uchar (uint8_t *bfr, int n, unsigned char x);
 	int put_ulong (uint8_t *bfr, int n, unsigned long x);
+	unsigned char get_uchar (uint8_t *bfr, int n);
+	unsigned long get_ulong (uint8_t *bfr, int n);
+
 
 
 
@@ -82,7 +85,7 @@ private:
 	int amount_of_burst;
 
 	/** tree number of this arq line */
-	unsigned char nt;
+	uint8_t nt;
 
 
 
