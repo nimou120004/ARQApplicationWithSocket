@@ -112,8 +112,24 @@ int main (int argc, char *argv[])
   LogComponentEnable ("SourceApplication", LOG_LEVEL_ALL);
   LogComponentEnable ("SinkApplication", LOG_LEVEL_ALL);
 
+
+
+  //Simulator::Schedule (Seconds (2), &SinkApplication::HandleReadOne, appSink->m_recv_socket1, appSink);
+
+  for (int i = 0; i < 10; i++)
+    {
+      Simulator::Schedule (Seconds (3), &SourceApplication::check_udp_socket, appSource);
+    }
+
+
+
+
   Simulator::Stop (Seconds (simTime));
   Simulator::Run ();
+
+  appSource->print_results ();
+  appSink->print_results ();
+
   Simulator::Destroy ();
 
 }

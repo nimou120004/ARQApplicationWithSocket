@@ -10,9 +10,7 @@
 #include "packet-data-tag.h"
 #include "nack-data-tag.h"
 #include "socket_io.h"
-
-
-
+#include "inttypes.h"
 
 
 
@@ -59,11 +57,15 @@ namespace ns3
     isArqEnabled = true;
     ploss = 0;
     lb = 0;
+    packets_received = 0;
+    packets_recovered = 0;
     skt_io = new Socket_io;
     for (int i = 0; i < MTR; i++)
       {
         if (!isArqEnabled)
-          al[i].isActive=false;
+          {
+             al[i].isActive=false;
+          }
         al[i].nt = i;
       }
     my_peer = new Socket_io::MyPeer;
@@ -129,44 +131,55 @@ namespace ns3
     //Send Socket
     m_send_socket = Socket::CreateSocket(GetNode(), tid);
 
-
     m_recv_socket1->SetRecvCallback(MakeCallback(&SinkApplication::HandleReadOne, this));
-
-
-
   }
 
   void SinkApplication::HandleReadOne(Ptr<Socket> socket)
   {
     //NS_LOG_FUNCTION(this << socket);
-
     Ptr<Packet> packet;
     Address from;
     Address localAddress;
     PacketDataTag tag;
 
-
     while ((packet = socket->RecvFrom(from)))
       {
+
         if(packet->PeekPacketTag (tag))
           {
             if (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO && packet != NULL)
               {
-                printf(".");
+
+                printf (CYAN_CODE);
+                printf (" %" PRIu32, tag.GetSeqNumber ());
+                printf (END_CODE);
+
+                //printf("g");
                 pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
                 pbb.new_packet_tag.nt = tag.GetTreeNumber ();
-                int nt = MTR; // ree number of current packet for this peer. in this case, always equals to 1
+                int nt = pbb.new_packet_tag.nt; // ree number of current packet for this peer. in this case, always equals to 1
                 pbb.new_packet_tag.seq_number = tag.GetSeqNumber ();
                 pbb.new_packet_tag.next = NULL;
                 pbb.new_packet_tag.nodeId = tag.GetNodeId ();
                 pbb.new_packet_tag.packet_id = tag.GetpacketId ();
                 //pbb.new_packet_tag.sender_addr =
                 pbb.new_packet_tag.timestamp = tag.GetTimestamp ();
+
+                /*
                 NS_LOG_INFO(TEAL_CODE << "HandleReadOne: node " << GetNode ()->GetId ()<< " Received " << packet->GetSize() << " bytes"
                             << " at time " << Now().GetSeconds ()<< " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
                             << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << " seq-number: " << tag.GetSeqNumber () << END_CODE);
+                */
                 if(pbb.add_packet_tag (&pbb.new_packet_tag) == EXIT_SUCCESS)
                   {
+                    if(pbb.new_packet_tag.number_of_repeat == 0)
+                      {
+                        packets_received ++;
+                      }
+                    else
+                      {
+                        packets_recovered ++;
+                      }
                     if(my_peer->child[nt] != NULL)
                       {
                         if (g[nt].getState ())
@@ -177,28 +190,33 @@ namespace ns3
                   }
                 if (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO)
                   {
-                    if ((al[MTR].isActive) && (!al[MTR].isStarted))
+
+                    if ((al[nt].isActive) && (!al[nt].isStarted))
                     {
-                        al[MTR].first_in_transmission = pbb.new_packet_tag.seq_number ;
-                        al[MTR].isStarted = true;
+                        al[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                        al[nt].isStarted = true;
                     }
 
                     //my_peer->parent[MTR]->ping_n = 0;//a number of activity requests (if ping_n=0 then OK)
                     //my_peer->parent[MTR]->ping_t = skt_io->GetTickCount();
 
                   }
-                if ((al[MTR].isActive) && (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO))
+                if ((al[nt].isActive) && (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO))
                 {
                     //arq lines for packets with "nt" from 0 to mtratio-1
-                    al[MTR].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
-                    if (al[MTR].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
-                        al[MTR].check();
+                    al[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                    if (al[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                      {
+                        al[nt].check();
+                      }
                     for (int i=0 ;i < MTR; i++)
                         if (al[i].isActive)
                           {
+                            //printf("isFirstPacket\n");
+
                             Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
-                            NackDataTag nack_tag;
-                            al[i].send_nack(m_destination_addr, m_port1, &ctrl_c, nack, nack_tag, m_send_socket);
+                            //NackDataTag nack_tag;
+                            al[i].send_nack(m_destination_addr, m_port1, &ctrl_c, nack, m_send_socket);
                           }
                 }
 
@@ -206,12 +224,13 @@ namespace ns3
           }
         else
           {
-            NS_LOG_INFO(PURPLE_CODE << "HandleReadOne: node " << GetNode ()->GetId ()<< " Received a Packet of size: " << packet->GetSize()
-                        << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
-                        << " port " <<InetSocketAddress::ConvertFrom (from).GetPort ()
-                        << END_CODE);
+            //some code
           }
+
       }
+    m_recv_socket1->SetRecvCallback(MakeCallback(&SinkApplication::HandleReadOne, this));
+
+
   }
 
 
@@ -231,16 +250,10 @@ namespace ns3
     //Simulator::Schedule(Seconds (3), &SinkApplication::SendPacket, this, packet); //, dest_ip, 7777);
   }
 
-  bool SinkApplication::findPrev(uint32_t prev){
-
-    std::list<uint32_t>::iterator findIter = std::find (prevlist.begin(), prevlist.end(), prev);
-    if(findIter != prevlist.end())
-      {
-        return 1;
-      }else{
-        return 0;
-      }
-
+  void SinkApplication::print_results ()
+  {
+    printf ("\nPackets received: %d \n", packets_received);
+    printf ("Packets recovered: %d \n", packets_recovered);
   }
 
 

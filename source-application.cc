@@ -10,6 +10,7 @@
 #include "packet-data-tag.h"
 #include "nack-data-tag.h"
 #include "socket_io.h"
+#include "inttypes.h"
 
 
 
@@ -51,12 +52,13 @@ namespace ns3
     m_port1 = 7777;
     m_port2 = 9999;
     m_number_of_packets_to_send = 10;
-    prev = exp = 0;
     isStarted = false;
     starttime = 0;
     gal_pn = 0;
     ploss = 0.5;
-    lb = 5;
+    lb = 6;
+    packetsSend = 0;
+    packetsRetransmitted = 0;
     g.initGilbert_Elliott (ploss, lb);
     pbb.max_length = MAX_PBBFR_SIZE;
     root = new Socket_io::Root;
@@ -114,9 +116,8 @@ namespace ns3
     m_send_socket = Socket::CreateSocket(GetNode(), tid);
 
     m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
-    //m_recv_socket2->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
-    //Simulator::Schedule(Seconds (4), &SourceApplication::check_udp_socket, this);
-    this->check_udp_socket ();
+    //Simulator::Schedule(Seconds (3), &SourceApplication::check_udp_socket, this);
+    //this->check_udp_socket ();
 
   }
 
@@ -132,8 +133,8 @@ namespace ns3
           }
         isStarted = true;
       }
-    for (int i = 0; i< m_number_of_packets_to_send; i++)
-      {
+   // for (int i = 0; i< m_number_of_packets_to_send; i++)
+    //  {
         Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
         PacketDataTag tag;
         tag.SetNumberOfRepeat (0);
@@ -142,9 +143,9 @@ namespace ns3
         tag.SetNodeId (GetNode ()->GetId ());
         tag.SetPacketId (IDM_UDP_ARQ_VIDEO);
         tag.SetTimestamp (Simulator::Now ());
-        tag.SetTreeNumber ((unsigned char)MTR);
-
+        tag.SetTreeNumber (0);
         packet->AddPacketTag (tag);
+
         pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
         pbb.new_packet_tag.seq_number = tag.GetSeqNumber ();
         pbb.new_packet_tag.nodeId = tag.GetNodeId ();
@@ -156,17 +157,33 @@ namespace ns3
         if (g.getState ())
           {
             if(this->SendPacket (packet) == EXIT_SUCCESS)
-              printf (".");
+              {
+                packetsSend++;
+                //printf (".");
+
+                printf (PURPLE_CODE);
+                printf (" %" PRIu32, tag.GetSeqNumber ());
+                printf (END_CODE);
+
+              }
+
           }
         else
           {
-            printf ("l");
+            printf (" l");
           }
 
-      }
-    Simulator::Schedule(Seconds (4), &SourceApplication::check_udp_socket, this);
+     // }
+    //Simulator::Schedule(Seconds (4), &SourceApplication::check_udp_socket, this);
+
 
     return EXIT_SUCCESS;
+  }
+
+  void SourceApplication::print_results()
+  {
+    printf ("\nPackets sent: %d \n", packetsSend);
+    printf ("Packets retransmitted: %d \n", packetsRetransmitted);
   }
 
   void SourceApplication::HandleReadTwo(Ptr<Socket> socket)
@@ -182,16 +199,21 @@ namespace ns3
           {
             if (nack_tag.GetPacketId () == IDM_UDP_ARQ_NACK_AL)
               {
+                printf(" recvNack");
+
                 NS_LOG_INFO(PURPLE_CODE << "HandleReadTwo: " << " node " << GetNode ()->GetId () << " Nack received"
                             << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
-                            << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << END_CODE);
+                            << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << "" <<  END_CODE);
                 uint32_t nack_n = nack_tag.GetNumberOfRepeat ();
                 int nack_bc = nack_tag.GetAmountOfBurst ();
                 unsigned char nack_nt = nack_tag.GetTreeNumber ();
                 for (int i = 0; i < nack_bc; i++)
                   {
-                    unsigned long nack_pn = nack_tag.get_ulong (nack_tag.bursts_length, i*5);
-                    unsigned char nack_bl = nack_tag.get_uchar (nack_tag.burst_first_sn, i*5 + 4);
+                    unsigned long nack_pn = nack_tag.get_uint (nack_tag.bursts_length, i);
+                    unsigned char nack_bl = nack_tag.get_uint (nack_tag.burst_first_sn, i);
+                    printf("nack_pn= %lu", nack_pn );
+                    printf("nack_bl= %u", nack_bl );
+
                     unsigned char nack_dwbl = 0;
                     //unsigned long nack_fpn = nack_pn;
 
@@ -211,7 +233,11 @@ namespace ns3
                             tag.SetTreeNumber (pbb.new_packet_tag.nt);
                             req_packet->AddPacketTag (tag);
                             if (this->SendPacket (req_packet) == EXIT_SUCCESS)
-                              printf("r");
+                              {
+                                packetsRetransmitted++;
+                                printf("r");
+                              }
+
                           }
                         else
                           nack_dwbl++;
@@ -238,10 +264,7 @@ namespace ns3
               }
           }
         else {
-            NS_LOG_INFO(PURPLE_CODE << "HandleReadTwo: node " << GetNode ()->GetId ()<< " Received a Packet of size: " << packet->GetSize()
-                        << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
-                        << " port " <<InetSocketAddress::ConvertFrom (from).GetPort ()
-                        << END_CODE);
+            // some code
           }
 
       }
@@ -259,18 +282,6 @@ namespace ns3
     //Simulator::Schedule(Seconds (3), &SourceApplication::SendPacket, this, packet); //, dest_ip, 7777);
   }
 
-
-  bool SourceApplication::findPrev(uint32_t prev){
-
-    std::list<uint32_t>::iterator findIter = std::find (prevlist.begin(), prevlist.end(), prev);
-    if(findIter != prevlist.end())
-      {
-        return 1;
-      }else{
-        return 0;
-      }
-
-  }
 
 
 } // namespace ns3

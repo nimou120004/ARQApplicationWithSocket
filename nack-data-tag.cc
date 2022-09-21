@@ -7,6 +7,7 @@
 #include "nack-data-tag.h"
 #include "ns3/log.h"
 #include "ns3/simulator.h"
+#include "socket_io.h"
 
 namespace ns3 {
 
@@ -16,8 +17,8 @@ NS_OBJECT_ENSURE_REGISTERED (NackDataTag);
 NackDataTag::NackDataTag() {
 	m_timestamp = Simulator::Now();
 	m_nodeId = -1;
-	burst_first_sn = new uint8_t[20];
-	bursts_length = new uint8_t[20];
+	burst_first_sn = new int[BL_BUFFER_SIZE];
+	bursts_length = new int[BL_BUFFER_SIZE];
 
 }
 
@@ -48,8 +49,8 @@ uint32_t NackDataTag::GetSerializedSize (void) const
 {
         return sizeof(Vector) + sizeof(uint32_t) + sizeof (ns3::Time) +
                sizeof(uint32_t) + sizeof(uint32_t) + sizeof (uint32_t) +
-               sizeof(uint32_t) + sizeof(uint8_t) + sizeof(char[20]) +
-               sizeof(char[20]);
+               sizeof(uint32_t) + sizeof(uint8_t) + sizeof(int[BL_BUFFER_SIZE]) +
+               sizeof(int[BL_BUFFER_SIZE]);
 }
 /**
  * The order of how you do Serialize() should match the order of Deserialize()
@@ -66,9 +67,14 @@ void NackDataTag::Serialize (TagBuffer i) const
 	i.WriteU32 (number_of_repeat);
 	i.WriteU32 (amount_of_burst);
 	i.WriteU8 (nt);
-	i.Write (burst_first_sn, 20);
-	i.Write (bursts_length, 20);
-
+	for(int k = 0; k < BL_BUFFER_SIZE; k++)
+	  {
+	    i.WriteU32(burst_first_sn[k]);
+	  }
+	for(int j = 0; j < BL_BUFFER_SIZE; j++)
+	  {
+	    i.WriteU32(bursts_length[j]);
+	  }
 
 }
 /** This function reads data from a buffer and store it in class's instance variables.
@@ -86,8 +92,15 @@ void NackDataTag::Deserialize (TagBuffer i)
 	number_of_repeat = i.ReadU32 ();
 	amount_of_burst = i.ReadU32 ();
 	nt = i.ReadU8 ();
-	i.Read(burst_first_sn, 20);
-	i.Read (bursts_length, 20);
+
+	for(int k = 0; k < BL_BUFFER_SIZE; k++)
+	  {
+	    burst_first_sn[k] = i.ReadU32 ();
+	  }
+	for(int j = 0; j < BL_BUFFER_SIZE; j++)
+	  {
+	    bursts_length[j] = i.ReadU32 ();
+	  }
 
 }
 /**
@@ -99,18 +112,19 @@ void NackDataTag::Print (std::ostream &os) const
      << "packet seq_number: " << seq_number;
 }
 
-int NackDataTag::put_uchar(uint8_t *bfr, int n, unsigned char x)
+int NackDataTag::put_uint(int *bfr, int n, int x)
 {
-  bfr[n] = (unsigned char) x;
+  bfr[n] = (int) x;
   return EXIT_SUCCESS;
 }
 
-unsigned char NackDataTag::get_uchar(uint8_t *bfr, int n)
+unsigned char NackDataTag::get_uint(int *bfr, int n)
 {
-  return (unsigned char)bfr[n];
+  return (int)bfr[n];
 }
 
-int NackDataTag::put_ulong(uint8_t *bfr, int n, unsigned long x)
+/*
+int NackDataTag::put_ulong(int *bfr, int n, unsigned long x)
 {
     bfr[n] = (unsigned char) (x >> 24) & 0xFF;
     bfr[n + 1] = (unsigned char) (x >> 16) & 0xFF;
@@ -119,12 +133,12 @@ int NackDataTag::put_ulong(uint8_t *bfr, int n, unsigned long x)
     return EXIT_SUCCESS;
 }
 
-unsigned long NackDataTag::get_ulong(uint8_t *bfr, int n)
+unsigned long NackDataTag::get_ulong(int *bfr, int n)
 {
     return ((unsigned char)bfr[n] << 24) + ((unsigned char)bfr[n + 1] << 16) +
             ((unsigned char)bfr[n + 2] << 8) + (unsigned char)bfr[n + 3];
 }
-
+*/
 
 //Your accessor and mutator functions 
 uint32_t NackDataTag::GetNodeId() {

@@ -33,15 +33,11 @@ namespace ns3
       */
       int SendPacket (Ptr<Packet> packet);
 
-      /** \brief check if the packet with prev sequnce number exist in playback buffer
-      */
-      bool findPrev(uint32_t prev);
-
       /** \brief handle the transmission and processing of data packets
       */
       int check_udp_socket();
 
-
+      void print_results ();
 
       void SetDestinationAddr(Ipv4Address dest_addr);
       Ipv4Address GetDestinationAddr();
@@ -54,8 +50,8 @@ namespace ns3
       Time m_send_time; /**< How often do you broadcast messages */
       std::list<uint32_t> prevlist; /**< A list of requested packets*/
 
-
-      uint32_t exp; /**< Sequence number of expected packet */
+      int packetsSend;
+      int packetsRetransmitted;
 
     private:
 
@@ -76,11 +72,6 @@ namespace ns3
 
       int m_number_of_packets_to_send;
 
-
-
-
-      uint32_t prev; /**< Sequence number of the previous received packet */
-
       Ptr<Socket> m_send_socket; /**< A socket to listen on a specific port */
 
       bool isStarted; /**< isStarted==true when first packet has created */
@@ -91,6 +82,7 @@ namespace ns3
       Socket_io *skt_io;
       Socket_io::Root *root; /**< my root which is the node from which i sending packets */
       gilbert_Elliott g; /**< Gilbert-Elliott model for burst error (loss) */
+
 
   };
 }

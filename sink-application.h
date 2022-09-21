@@ -35,8 +35,7 @@ namespace ns3
       */
       void SendNack (uint32_t seq_number);
 
-      bool findPrev(uint32_t prev);
-
+      void print_results ();
       void SetDestinationAddr(Ipv4Address dest_addr);
 
       Ipv4Address GetDestinationAddr();
@@ -57,6 +56,9 @@ namespace ns3
       Socket_io *skt_io;
       Socket_io::MyPeer *my_peer;
 
+      int packets_received;
+      int packets_recovered;
+      Ptr<Socket> m_recv_socket1; /**< A socket to receive on a specific port */
 
     private:
 
@@ -65,7 +67,7 @@ namespace ns3
       virtual void StartApplication ();
 
 
-      Ptr<Socket> m_recv_socket1; /**< A socket to receive on a specific port */
+
       Ptr<Socket> m_recv_socket2; /**< A socket to receive on a specific port */
       uint16_t m_port1;
       uint16_t m_port2;

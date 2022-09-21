@@ -48,16 +48,16 @@ public:
 	virtual ~NackDataTag();
 
 	/** list of first sequence numbers of each burst */
-	uint8_t *burst_first_sn;
+	int *burst_first_sn;
 
 
 	/** list of lengths of the burst */
-	uint8_t *bursts_length;
+	int *bursts_length;
 
-	int put_uchar (uint8_t *bfr, int n, unsigned char x);
-	int put_ulong (uint8_t *bfr, int n, unsigned long x);
-	unsigned char get_uchar (uint8_t *bfr, int n);
-	unsigned long get_ulong (uint8_t *bfr, int n);
+	int put_uint (int *bfr, int n, int x);
+	//int put_ulong (int *bfr, int n, unsigned long x);
+	unsigned char get_uint (int *bfr, int n);
+	//unsigned long get_ulong (int *bfr, int n);
 
 
 

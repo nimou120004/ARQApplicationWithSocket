@@ -13,7 +13,7 @@
 #define MAX_PACKET_NUMBER  0xFFFFFFFF //4294967295
 
 #define MTU_SIZE        1000 //maximum transmission unit
-#define MTU_NACK_SIZE   90 // maximum transmission unit for NACK packets
+#define MTU_NACK_SIZE   93 // maximum transmission unit for NACK packets
 #define VIDEO_CHUNCK_SIZE 188
 #define VIDEO_SIZE      1314 //7*188
 #define RTP_HDR_SIZE    12 //12(rtp_hdr) + 7*188
@@ -54,6 +54,7 @@
 #define IDM_UDP_DL_IS_BUSY  255 //a message from delay line when there is no packet to unbuf (DELAY LINE)
 
 #define ID_ERR_STOP         100
+#define BL_BUFFER_SIZE      200 //size of burst_length and first_packet buffers
 
 using namespace ns3;
 namespace ns3

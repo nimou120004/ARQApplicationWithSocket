@@ -236,13 +236,15 @@ namespace ns3 {
         }
   }
 
-  int arq_line_socket::send_nack(Ipv4Address m_destination_addr, uint16_t m_port1, simple_c *ctrl_c, Ptr<Packet> nack, NackDataTag nack_tag,  Ptr<Socket> m_send_socket)
+  int arq_line_socket::send_nack(Ipv4Address m_destination_addr, uint16_t m_port1, simple_c *ctrl_c, Ptr<Packet> nack, Ptr<Socket> m_send_socket)
   {
     int tw;
     int i;
     doNotDrop = true;
+
     if (aowg)
     {
+        printf(" amountOfWaitingGroup %u ", aowg );
         for (int wg_n = 0; wg_n < aowg; wg_n++)
         {
             if ((tw = (GetTickCount() - wg[wg_n].t_waiting)) >= tr)
@@ -272,6 +274,7 @@ namespace ns3 {
                 }
                 else
                 {
+                    NackDataTag nack_tag;
                     nack_tag.SetPacketId (IDM_UDP_ARQ_NACK_AL);
                     wg[wg_n].nr++;
                     nack_tag.SetNumberOfRepeat (nr);
@@ -279,8 +282,9 @@ namespace ns3 {
                     nack_tag.SetTreeNumber (nt);
                     for (i = 0; i < wg[wg_n].amount_of_bursts; i++)
                       {
-                        nack_tag.put_ulong (nack_tag.burst_first_sn, i*5, wg[aowg - 1].b[0].first_sn);
-                        nack_tag.put_uchar (nack_tag.bursts_length, i*5 + 4, wg[aowg - 1].b[0].length);
+                        nack_tag.put_uint (nack_tag.burst_first_sn, i, (int)wg[aowg - 1].b[0].first_sn);
+                        printf(" Puttednack_pn= %lu", wg[aowg - 1].b[0].first_sn );
+                        nack_tag.put_uint (nack_tag.bursts_length, i, (int)wg[aowg - 1].b[0].length);
                       }
 
                     if (!ctrl_c->error ())
@@ -307,6 +311,7 @@ namespace ns3 {
     }//if wait
     if ((cur != prev + 1) && (cur >= first_in_transmission + 10) && (prev != max_pn || cur))
     {
+        printf(" cur!=prev %u ", aowg );
         if (((long)(cur - prev - 1)) > 0)
         {
             if ((cur - prev - 1) < MAX_BURST_LENGTH_AL)
@@ -325,14 +330,15 @@ namespace ns3 {
             wg[aowg - 1].tt = 0;
             wg[aowg - 1].nr = 1;
             wg[aowg - 1].recalc_nr = false;
-            //to fill NACK message to current parent peer
 
+            //to fill NACK message to current parent peer
+            NackDataTag nack_tag;
             nack_tag.SetPacketId (IDM_UDP_ARQ_NACK_AL);
             nack_tag.SetNumberOfRepeat (nr);
             nack_tag.SetAmountOfBurst (wg[aowg - 1].amount_of_bursts);
             nack_tag.SetTreeNumber (nt);
-            nack_tag.put_ulong (nack_tag.burst_first_sn, 0, wg[aowg - 1].b[0].first_sn);
-            nack_tag.put_uchar (nack_tag.bursts_length, 4, wg[aowg - 1].b[0].length);
+            nack_tag.put_uint (nack_tag.burst_first_sn, 0, (int)wg[aowg - 1].b[0].first_sn);
+            nack_tag.put_uint (nack_tag.bursts_length, 4, (int)wg[aowg - 1].b[0].length);
 
             if (!ctrl_c->error())
             {
