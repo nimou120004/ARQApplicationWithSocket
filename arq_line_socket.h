@@ -6,7 +6,7 @@
 
 #define MAX_BURST_LENGTH_AL   100
 #define MAX_BURST_COUNT_AL     200
-#define MAX_TOTAL_WAITING_TIME_AL 1000
+#define MAX_TOTAL_WAITING_TIME_AL 3000
 
 using namespace ns3;
 namespace ns3

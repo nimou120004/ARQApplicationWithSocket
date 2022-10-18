@@ -132,6 +132,7 @@ namespace ns3
     m_send_socket = Socket::CreateSocket(GetNode(), tid);
 
     m_recv_socket1->SetRecvCallback(MakeCallback(&SinkApplication::HandleReadOne, this));
+
   }
 
   void SinkApplication::HandleReadOne(Ptr<Socket> socket)
@@ -149,10 +150,6 @@ namespace ns3
           {
             if (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO && packet != NULL)
               {
-
-                printf (CYAN_CODE);
-                printf (" %" PRIu32, tag.GetSeqNumber ());
-                printf (END_CODE);
 
                 //printf("g");
                 pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
@@ -172,6 +169,9 @@ namespace ns3
                 */
                 if(pbb.add_packet_tag (&pbb.new_packet_tag) == EXIT_SUCCESS)
                   {
+                    printf (CYAN_CODE);
+                    printf (" %" PRIu32, pbb.new_packet_tag.seq_number);
+                    printf (END_CODE);
                     if(pbb.new_packet_tag.number_of_repeat == 0)
                       {
                         packets_received ++;
@@ -228,7 +228,7 @@ namespace ns3
           }
 
       }
-    m_recv_socket1->SetRecvCallback(MakeCallback(&SinkApplication::HandleReadOne, this));
+   // m_recv_socket1->SetRecvCallback(MakeCallback(&SinkApplication::HandleReadOne, this));
 
 
   }

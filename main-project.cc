@@ -8,6 +8,7 @@
 #include "packet-data-tag.h"
 #include "netDevice-setup.h"
 #include "ns3/mobility-module.h"
+#include "ns3/netanim-module.h"
 
 
 #define PACKET_SIZE  1000;
@@ -116,13 +117,15 @@ int main (int argc, char *argv[])
 
   //Simulator::Schedule (Seconds (2), &SinkApplication::HandleReadOne, appSink->m_recv_socket1, appSink);
 
-  for (int i = 0; i < 10; i++)
+  for (int i = 0; i < 500; i++)
     {
-      Simulator::Schedule (Seconds (3), &SourceApplication::check_udp_socket, appSource);
+      Simulator::Schedule (Seconds (3 + (i * 0.01)), &SourceApplication::check_udp_socket, appSource);
     }
 
 
-
+  AnimationInterface anim("animARQ.xml");
+  anim.SetConstantPosition (nodes.Get (0), 1.0, 2.0);
+  anim.SetConstantPosition (nodes.Get (1), 2.0, 3.0);
 
   Simulator::Stop (Seconds (simTime));
   Simulator::Run ();

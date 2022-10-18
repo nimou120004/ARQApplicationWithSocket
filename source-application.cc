@@ -55,8 +55,8 @@ namespace ns3
     isStarted = false;
     starttime = 0;
     gal_pn = 0;
-    ploss = 0.5;
-    lb = 6;
+    ploss = 0.07;
+    lb = 8;
     packetsSend = 0;
     packetsRetransmitted = 0;
     g.initGilbert_Elliott (ploss, lb);
@@ -158,6 +158,10 @@ namespace ns3
           {
             if(this->SendPacket (packet) == EXIT_SUCCESS)
               {
+
+               /* NS_LOG_INFO(TEAL_CODE << "SendPacket: node " << GetNode ()->GetId ()<< " Send " << packet->GetSize() << " bytes"
+                            << " at time " << Now().GetSeconds()<< " seq-number: " << tag.GetSeqNumber () << END_CODE);
+                */
                 packetsSend++;
                 //printf (".");
 
@@ -199,11 +203,13 @@ namespace ns3
           {
             if (nack_tag.GetPacketId () == IDM_UDP_ARQ_NACK_AL)
               {
-                printf(" recvNack");
-
+               // printf(" recvNack");
+                /*
                 NS_LOG_INFO(PURPLE_CODE << "HandleReadTwo: " << " node " << GetNode ()->GetId () << " Nack received"
                             << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
                             << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << "" <<  END_CODE);
+
+                */
                 uint32_t nack_n = nack_tag.GetNumberOfRepeat ();
                 int nack_bc = nack_tag.GetAmountOfBurst ();
                 unsigned char nack_nt = nack_tag.GetTreeNumber ();
@@ -211,8 +217,8 @@ namespace ns3
                   {
                     unsigned long nack_pn = nack_tag.get_uint (nack_tag.bursts_length, i);
                     unsigned char nack_bl = nack_tag.get_uint (nack_tag.burst_first_sn, i);
-                    printf("nack_pn= %lu", nack_pn );
-                    printf("nack_bl= %u", nack_bl );
+                    //printf("nack_pn= %lu", nack_pn );
+                    //printf("nack_bl= %u", nack_bl );
 
                     unsigned char nack_dwbl = 0;
                     //unsigned long nack_fpn = nack_pn;
@@ -235,7 +241,7 @@ namespace ns3
                             if (this->SendPacket (req_packet) == EXIT_SUCCESS)
                               {
                                 packetsRetransmitted++;
-                                printf("r");
+                                printf(" r%lu ", (unsigned long)tag.GetSeqNumber ());
                               }
 
                           }

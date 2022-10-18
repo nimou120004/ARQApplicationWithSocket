@@ -58,6 +58,7 @@ namespace ns3
     int get_packet_tag_by_p2p_pn (unsigned long p2p_pn, unsigned char nt);//get data from p2p_pn packet into new_packet var
     int get_pn_by_p2p_pn (unsigned long p2p_pn, unsigned char nt, unsigned long &pn);
     int add_packet_tag (pbb_packet_tag *packet_tag);
+    int add_packet_tag_source_buffer (pbb_packet_tag *packet_tag);
   };
 
 

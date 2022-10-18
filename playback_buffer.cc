@@ -53,12 +53,12 @@ namespace ns3
   bool PlaybackBuffer::shift_buffer()
   {
     if(length >= max_length){
-        add_packet_tag (&new_packet_tag);
+        add_packet_tag_source_buffer (&new_packet_tag);
         delete_first_packet_tag ();
         return true;
       }
     else{
-        add_packet_tag (&new_packet_tag);
+        add_packet_tag_source_buffer (&new_packet_tag);
         return false;
       }
   }
@@ -134,7 +134,7 @@ namespace ns3
             prev = cur;
             cur = prev->next;
           }
-        if (cur->seq_number == packet_tag->seq_number)
+        if (cur->seq_number == packet_tag->seq_number || prev->seq_number == packet_tag->seq_number)
           return EXIT_FAILURE;
         prev->next = temp;
         temp->next = cur;
@@ -145,6 +145,50 @@ namespace ns3
 
   }
 
+  int PlaybackBuffer::add_packet_tag_source_buffer (PlaybackBuffer::pbb_packet_tag *packet_tag)
+  {
+   // NS_LOG_INFO("packet added ");
+    pbb_packet_tag    *temp = new pbb_packet_tag,
+        *cur,
+        *prev;
+    if(length == 0)
+      {
+        copy_packet_tag (&new_packet_tag, temp);
+        first_packet_tag = temp;
+        last_packet_tag = temp;
+      }
+    else if (first_packet_tag->seq_number > packet_tag->seq_number)
+      {
+        copy_packet_tag (first_packet_tag, temp);
+        copy_packet_tag (&new_packet_tag, first_packet_tag);
+        first_packet_tag->next = temp;
+      }
+    else if (last_packet_tag->seq_number < packet_tag->seq_number)
+      {
+        copy_packet_tag (&new_packet_tag, temp);
+        last_packet_tag->next = temp;
+        last_packet_tag = temp;
+      }
+    else
+      {
+        copy_packet_tag (&new_packet_tag, temp);
+        prev = first_packet_tag;
+        cur = first_packet_tag->next;
+        while ((cur != NULL) && (cur->seq_number < packet_tag->seq_number))
+          {
+            prev = cur;
+            cur = prev->next;
+          }
+        if (cur->seq_number == packet_tag->seq_number)
+          return EXIT_FAILURE;
+        prev->next = temp;
+        temp->next = cur;
+
+      }
+    length++;
+    return EXIT_SUCCESS;
+
+  }
   //  int PlaybackBuffer::get_packet_tag_by_p2p_pn(unsigned long p2p_pn, unsigned char nt)
   //  {
   //    return EXIT_SUCCESS;
