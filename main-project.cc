@@ -37,6 +37,7 @@ int main (int argc, char *argv[])
   uint32_t nNodes = 2;
   double simTime = 60; //4 seconds
   double interval = 0.5;
+  double distance = 45.0;
   bool enablePcap = false;
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("i", "Broadcast interval in seconds", interval);
@@ -51,6 +52,7 @@ int main (int argc, char *argv[])
   /*
     You must setup Mobility. Any mobility will work. Use one suitable for your work
   */
+  /* example 1 using ConstantVelocityMobilityModel
   MobilityHelper mobility;
   mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
   mobility.Install(nodes);
@@ -63,6 +65,21 @@ int main (int argc, char *argv[])
     cvmm->SetPosition ( Vector (20+i*5, 20+(i%2)*5, 0));
     cvmm->SetVelocity ( Vector (10+((i+1)%2)*5,0,0) );
   }
+  */
+  /*example 2 using ConstantPositionMobilityModel*/
+  MobilityHelper mobility;
+
+  Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator>();
+  positionAlloc->Add (Vector (0.0, 0.0, 0.0));
+  positionAlloc->Add (Vector (distance, 0.0, 0.0));
+  mobility.SetPositionAllocator (positionAlloc);
+  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+
+  for (uint32_t i=0 ; i<nodes.GetN () - 1; i++)
+    {
+      mobility.Install (nodes.Get (i));
+    }
+  /*end example 2*/
 
   NetDeviceSetup setup;
 

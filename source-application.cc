@@ -55,8 +55,8 @@ namespace ns3
     isStarted = false;
     starttime = 0;
     gal_pn = 0;
-    ploss = 0.07;
-    lb = 8;
+    ploss = 0.0;
+    lb = 0;
     packetsSend = 0;
     packetsRetransmitted = 0;
     g.initGilbert_Elliott (ploss, lb);
@@ -215,10 +215,10 @@ namespace ns3
                 unsigned char nack_nt = nack_tag.GetTreeNumber ();
                 for (int i = 0; i < nack_bc; i++)
                   {
-                    unsigned long nack_pn = nack_tag.get_uint (nack_tag.bursts_length, i);
-                    unsigned char nack_bl = nack_tag.get_uint (nack_tag.burst_first_sn, i);
-                    //printf("nack_pn= %lu", nack_pn );
-                    //printf("nack_bl= %u", nack_bl );
+                    int nack_pn = nack_tag.get_uint (nack_tag.burst_first_sn, i);
+                    int nack_bl = nack_tag.get_uint (nack_tag.bursts_length, i);
+                    //printf("nack_pn= %d", nack_pn );
+                    //printf("nack_bl= %d", nack_bl );
 
                     unsigned char nack_dwbl = 0;
                     //unsigned long nack_fpn = nack_pn;

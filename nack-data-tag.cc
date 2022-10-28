@@ -118,7 +118,7 @@ int NackDataTag::put_uint(int *bfr, int n, int x)
   return EXIT_SUCCESS;
 }
 
-unsigned char NackDataTag::get_uint(int *bfr, int n)
+int NackDataTag::get_uint(int *bfr, int n)
 {
   return (int)bfr[n];
 }

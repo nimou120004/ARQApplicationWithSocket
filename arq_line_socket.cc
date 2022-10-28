@@ -279,7 +279,7 @@ namespace ns3 {
                     NackDataTag nack_tag;
                     nack_tag.SetPacketId (IDM_UDP_ARQ_NACK_AL);
                     wg[wg_n].nr++;
-                    nack_tag.SetNumberOfRepeat (nr);
+                    nack_tag.SetNumberOfRepeat (wg[wg_n].nr);
                     nack_tag.SetAmountOfBurst (wg[wg_n].amount_of_bursts);
                     nack_tag.SetTreeNumber (nt);
                     for (i = 0; i < wg[wg_n].amount_of_bursts; i++)
@@ -298,7 +298,7 @@ namespace ns3 {
                         else
                           {
                             //fprintf(file,"\n");
-                            printf(" n%d ",nt);
+                            printf(" N%d ",wg[aowg - 1].nr);
                           }
                       }
                     else
@@ -311,9 +311,9 @@ namespace ns3 {
               }  //endif
           }
       }//if wait
-    if ((cur != prev + 1) && (prev != max_pn || cur)) // && (cur >= first_in_transmission + 10) )
+    if ((cur != prev + 1) && (prev != max_pn || cur))// && (cur >= first_in_transmission + 10) )
       {
-        //printf(" cur!=prev ");
+        //printf(" cur!=prev %lu!=%lu", cur, prev );
         if (((long)(cur - prev - 1)) > 0)
           {
             if ((cur - prev - 1) < MAX_BURST_LENGTH_AL)
@@ -336,11 +336,12 @@ namespace ns3 {
             //to fill NACK message to current parent peer
             NackDataTag nack_tag;
             nack_tag.SetPacketId (IDM_UDP_ARQ_NACK_AL);
-            nack_tag.SetNumberOfRepeat (nr);
+            nack_tag.SetNumberOfRepeat (1);
             nack_tag.SetAmountOfBurst (wg[aowg - 1].amount_of_bursts);
             nack_tag.SetTreeNumber (nt);
             nack_tag.put_uint (nack_tag.burst_first_sn, 0, (int)wg[aowg - 1].b[0].first_sn);
-            nack_tag.put_uint (nack_tag.bursts_length, 4, (int)wg[aowg - 1].b[0].length);
+            nack_tag.put_uint (nack_tag.bursts_length, 0, (int)wg[aowg - 1].b[0].length);
+            //printf("firstSN=%lu length=%u", wg[aowg - 1].b[0].first_sn, wg[aowg - 1].b[0].length);
 
             if (!ctrl_c->error())
               {
@@ -351,7 +352,7 @@ namespace ns3 {
                 else
                   {
                     //fprintf(file,"\n");
-                    printf(" n%d ",nt);
+                    printf(" N%d ",wg[aowg - 1].nr);
                   }
               }
             else

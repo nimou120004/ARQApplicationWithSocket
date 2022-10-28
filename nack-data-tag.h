@@ -56,7 +56,7 @@ public:
 
 	int put_uint (int *bfr, int n, int x);
 	//int put_ulong (int *bfr, int n, unsigned long x);
-	unsigned char get_uint (int *bfr, int n);
+	int get_uint (int *bfr, int n);
 	//unsigned long get_ulong (int *bfr, int n);
 
 
