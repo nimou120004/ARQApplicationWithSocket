@@ -9,6 +9,8 @@
 #include "netDevice-setup.h"
 #include "ns3/mobility-module.h"
 #include "ns3/netanim-module.h"
+#include "ns3/yans-wifi-helper.h"
+#include "ns3/yans-wifi-channel.h"
 
 
 #define PACKET_SIZE  1000;
@@ -33,16 +35,14 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   //LogComponentEnable ("SourceApplication", LOG_LEVEL_INFO);
 
-  //Number of nodes
   uint32_t nNodes = 2;
   double simTime = 60; //4 seconds
-  double interval = 0.5;
-  double distance = 45.0;
+  double distance = 40.0;
   bool enablePcap = false;
   cmd.AddValue ("t","Simulation Time", simTime);
-  cmd.AddValue ("i", "Broadcast interval in seconds", interval);
   cmd.AddValue ("n", "Number of nodes", nNodes);
   cmd.AddValue ("pcap", "Enable PCAP", enablePcap);
+  cmd.AddValue ("d", "distance", distance);
   cmd.Parse (argc, argv);
 
   NodeContainer nodes;
@@ -71,11 +71,11 @@ int main (int argc, char *argv[])
 
   Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator>();
   positionAlloc->Add (Vector (0.0, 0.0, 0.0));
-  positionAlloc->Add (Vector (distance, 0.0, 0.0));
+  positionAlloc->Add (Vector (0.0, 0.0, 0.0));
   mobility.SetPositionAllocator (positionAlloc);
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 
-  for (uint32_t i=0 ; i<nodes.GetN () - 1; i++)
+  for (uint32_t i=0 ; i<nNodes - 1; i++)
     {
       mobility.Install (nodes.Get (i));
     }
@@ -141,8 +141,8 @@ int main (int argc, char *argv[])
 
 
   AnimationInterface anim("animARQ.xml");
-  anim.SetConstantPosition (nodes.Get (0), 1.0, 2.0);
-  anim.SetConstantPosition (nodes.Get (1), 2.0, 3.0);
+  anim.SetConstantPosition (nodes.Get (0), 0.0, 0.0);
+  anim.SetConstantPosition (nodes.Get (1), distance, 0.0);
 
   Simulator::Stop (Seconds (simTime));
   Simulator::Run ();

@@ -291,6 +291,7 @@ namespace ns3 {
 
                     if (!ctrl_c->error ())
                       {
+                        nack->RemoveAllPacketTags ();
                         nack->AddPacketTag (nack_tag);
                         m_send_socket->Connect (InetSocketAddress(m_destination_addr, m_port1));
                         if (m_send_socket->Send (nack) < 0)
@@ -300,6 +301,7 @@ namespace ns3 {
                             //fprintf(file,"\n");
                             printf(" N%d ",wg[aowg - 1].nr);
                           }
+
                       }
                     else
                       {
