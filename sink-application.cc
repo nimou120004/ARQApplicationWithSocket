@@ -99,12 +99,14 @@ namespace ns3
       }
   }
 
+  /*
   void SinkApplication::SetDestinationAddr (Ipv4Address dest_addr){
     m_destination_addr = dest_addr;
   }
   Ipv4Address SinkApplication::GetDestinationAddr (){
     return m_destination_addr;
   }
+  */
 
   void SinkApplication::SetMyAddr (Ipv4Address my_addr){
     m_my_addr = my_addr;
@@ -216,7 +218,7 @@ namespace ns3
 
                             Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
                             //NackDataTag nack_tag;
-                            al[i].send_nack(m_destination_addr, m_port1, &ctrl_c, nack, m_send_socket);
+                            al[i].send_nack(m_destination_addrs[0] , m_port1, &ctrl_c, nack, m_send_socket);
                           }
                 }
 
@@ -245,7 +247,7 @@ namespace ns3
     tag.SetSeqNumber (seq_number);
     nack->AddPacketTag (tag);
 
-    m_send_socket->Connect(InetSocketAddress(m_destination_addr, m_port1));
+    m_send_socket->Connect(InetSocketAddress(m_destination_addrs[0], m_port1));
     m_send_socket->Send(nack);
     //Simulator::Schedule(Seconds (3), &SinkApplication::SendPacket, this, packet); //, dest_ip, 7777);
   }

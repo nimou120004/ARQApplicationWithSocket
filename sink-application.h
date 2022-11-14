@@ -9,6 +9,7 @@
 #include "playback_buffer.h"
 #include "socket_io.h"
 #include "gilbert_elliott.h"
+//#include "vector"
 
 
 
@@ -36,9 +37,9 @@ namespace ns3
       void SendNack (uint32_t seq_number);
 
       void print_results ();
-      void SetDestinationAddr(Ipv4Address dest_addr);
+      //void SetDestinationAddr(Ipv4Address dest_addr);
 
-      Ipv4Address GetDestinationAddr();
+      //Ipv4Address GetDestinationAddr();
 
       void SetMyAddr(Ipv4Address my_addr);
 
@@ -58,6 +59,7 @@ namespace ns3
 
       int packets_received;
       int packets_recovered;
+      std::vector<Ipv4Address> m_destination_addrs;
       Ptr<Socket> m_recv_socket1; /**< A socket to receive on a specific port */
 
     private:
@@ -73,7 +75,7 @@ namespace ns3
       uint16_t m_port2;
       uint32_t m_packet_size;
      // Ptr<MyHeader> arqHeader;
-      Ipv4Address m_destination_addr;
+
       Ipv4Address m_my_addr;
       uint32_t m_number_of_packets_to_send;
       uint32_t prev; /**< Sequence number of the previous received packet */

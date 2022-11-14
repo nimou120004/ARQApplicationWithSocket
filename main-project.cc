@@ -75,7 +75,7 @@ int main (int argc, char *argv[])
   mobility.SetPositionAllocator (positionAlloc);
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 
-  for (uint32_t i=0 ; i<nNodes - 1; i++)
+  for (int i=0 ; i<(int)nodes.GetN (); i++)
     {
       mobility.Install (nodes.Get (i));
     }
@@ -94,7 +94,6 @@ int main (int argc, char *argv[])
   ifaces = address.Assign (devices);
 
 
-
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   Packet::EnablePrinting ();
 
@@ -107,23 +106,40 @@ int main (int argc, char *argv[])
   //Set up sink application
   appSink->SetStartTime (Seconds(1));
   appSink->SetStopTime (Seconds (simTime));
-  Ipv4Address dest_ip ("10.1.1.2");
   Ipv4Address my_ip("10.1.1.1");
-  appSink->SetDestinationAddr (dest_ip);
   appSink->SetMyAddr (my_ip);
+  for(int i=1; i < (int)nodes.GetN (); i++)
+    {
+      //Ipv4Address dest_ip ("10.1.1."+(i+1));
+      Ptr<Ipv4> ipv4 = nodes.Get (i)->GetObject<Ipv4>();
+      Ipv4InterfaceAddress iaddr = ipv4->GetAddress (0,0);
+      Ipv4Address dest_ip = iaddr.GetLocal ();
+      appSink->m_destination_addrs.insert (appSink->m_destination_addrs.begin (),dest_ip);
+    }
 
   // Set up source application
   appSource->SetStartTime (Seconds(2));
   appSource->SetStopTime (Seconds (simTime));
   Ipv4Address dest_ip2 ("10.1.1.1");
   appSource->SetDestinationAddr (dest_ip2);
-  Ipv4Address my_addr2 ("10.1.1.2");
-  appSource->SetMyAddr (my_addr2);
+  for(int i = 1; i<(int)nodes.GetN (); i++)
+    {
+      //Ipv4Address my_addr2("10.1.1." + (i+1));
+      Ptr<Ipv4> ipv4 = nodes.Get (i)->GetObject<Ipv4>();
+      Ipv4InterfaceAddress iaddr = ipv4->GetAddress (0,0);
+      Ipv4Address my_addr2 = iaddr.GetLocal ();
+      appSource->SetMyAddr (my_addr2);
+      nodes.Get(i)->AddApplication (appSource);
+    }
 
 
-  //install one application at node 0, and the other at node 1
+  //install one application at node 0, and the other at node n
   nodes.Get(0)->AddApplication (appSink);
-  nodes.Get(1)->AddApplication (appSource);
+ /* for (int i = 1; i < (int)nodes.GetN (); i++)
+    {
+      nodes.Get(i)->AddApplication (appSource);
+    }
+*/
 
 
 
@@ -142,12 +158,17 @@ int main (int argc, char *argv[])
 
   AnimationInterface anim("animARQ.xml");
   anim.SetConstantPosition (nodes.Get (0), 0.0, 0.0);
-  anim.SetConstantPosition (nodes.Get (1), distance, 0.0);
+  for (int i = 1; i < (int)nodes.GetN (); i++)
+    {
+      anim.SetConstantPosition (nodes.Get (i), distance, 0.0);
+    }
+
 
   Simulator::Stop (Seconds (simTime));
   Simulator::Run ();
 
   appSource->print_results ();
+
   appSink->print_results ();
 
   Simulator::Destroy ();

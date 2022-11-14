@@ -158,17 +158,14 @@ namespace ns3
           {
             if(this->SendPacket (packet) == EXIT_SUCCESS)
               {
-
                /* NS_LOG_INFO(TEAL_CODE << "SendPacket: node " << GetNode ()->GetId ()<< " Send " << packet->GetSize() << " bytes"
                             << " at time " << Now().GetSeconds()<< " seq-number: " << tag.GetSeqNumber () << END_CODE);
                 */
                 packetsSend++;
                 //printf (".");
-
                 printf (PURPLE_CODE);
                 printf (" %" PRIu32, tag.GetSeqNumber ());
                 printf (END_CODE);
-
               }
 
           }
@@ -193,6 +190,7 @@ namespace ns3
   void SourceApplication::HandleReadTwo(Ptr<Socket> socket)
   {
     //NS_LOG_FUNCTION(this << socket);
+    printf(" recvNack");
     Ptr<Packet> packet;
     Address from;
     Address localAddress;
@@ -271,6 +269,7 @@ namespace ns3
           }
         else {
             // some code
+            printf("Somthing wrong");
           }
 
       }
