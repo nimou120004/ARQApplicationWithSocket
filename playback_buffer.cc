@@ -46,6 +46,7 @@ namespace ns3
     to->seq_number = from->seq_number;
     to->timestamp = from->timestamp;
     to->nt = from->nt;
+    std::memcpy(to->sourceAddr, from->sourceAddr, sizeof (to->sourceAddr));
 
     return EXIT_SUCCESS;
   }
@@ -100,6 +101,68 @@ namespace ns3
   //    return EXIT_SUCCESS;
   //  }
 
+  /* for multi-source */
+  int PlaybackBuffer::add_packet_tag (pbb_packet_tag *packet)
+  {
+    pbb_packet_tag 	*temp = new pbb_packet_tag,
+        *cur,
+        *prev;
+
+    if (!length)
+      {
+        copy_packet_tag (&new_packet_tag, temp);
+        first_packet_tag = temp;
+        last_packet_tag = temp;
+        //ts0 = GetTickCount();
+      }
+    else if ( (addrEquals (first_packet_tag->sourceAddr, packet->sourceAddr)) && (first_packet_tag->seq_number > packet->seq_number))
+      {
+            copy_packet_tag (first_packet_tag, temp);
+            copy_packet_tag (&new_packet_tag, first_packet_tag);
+            first_packet_tag->next = temp;
+            return EXIT_SUCCESS;
+      }
+     else if ((addrEquals (last_packet_tag->sourceAddr, packet->sourceAddr)) && (last_packet_tag->seq_number < packet->seq_number))
+      {
+            copy_packet_tag (&new_packet_tag, temp);
+            last_packet_tag->next = temp;
+            last_packet_tag = temp;
+            return EXIT_SUCCESS;
+      }
+
+    else
+      {
+        copy_packet_tag (&new_packet_tag, temp);
+        prev = first_packet_tag;
+        cur = first_packet_tag->next;
+        while (cur != NULL)
+          {
+            if(!addrEquals (cur->sourceAddr, packet->sourceAddr))
+              {
+                prev = cur;
+                cur = prev->next;
+              }
+            else if((addrEquals (cur->sourceAddr, packet->sourceAddr)) && (cur->seq_number < packet->seq_number))
+              {
+                prev = cur;
+                cur = prev->next;
+              }
+            else
+              break;
+          }
+        if ((cur!=NULL)&&(cur->seq_number == packet->seq_number) && (addrEquals (cur->sourceAddr, packet->sourceAddr)))
+          {
+            return EXIT_FAILURE;
+          }
+        prev->next = temp;
+        temp->next = cur;
+      }
+    length++;
+    //ts_lp = GetTickCount();
+    return EXIT_SUCCESS;
+  }
+
+  /* for one source
   int PlaybackBuffer::add_packet_tag(PlaybackBuffer::pbb_packet_tag *packet_tag)
   {
    // NS_LOG_INFO("packet added ");
@@ -144,10 +207,12 @@ namespace ns3
     return EXIT_SUCCESS;
 
   }
+  */
+
 
   int PlaybackBuffer::add_packet_tag_source_buffer (PlaybackBuffer::pbb_packet_tag *packet_tag)
   {
-   // NS_LOG_INFO("packet added ");
+    // NS_LOG_INFO("packet added ");
     pbb_packet_tag    *temp = new pbb_packet_tag,
         *cur,
         *prev;
@@ -301,7 +366,6 @@ namespace ns3
       }
   }
 
-
   int PlaybackBuffer::clear_pbb()
   {
     while(length != 0)
@@ -316,6 +380,20 @@ namespace ns3
 
     return EXIT_SUCCESS;
   }
+
+  bool PlaybackBuffer::addrEquals(uint8_t addr1[], uint8_t addr2[])
+  {
+    for (int i = 0; i < 4; i++)
+      {
+        if(addr1[i] != addr2[i]){
+            return false;
+          }
+      }
+    return true;
+  }
+
+
+
 
 
 }

@@ -64,9 +64,13 @@ namespace ns3
       {
         if (!isArqEnabled)
           {
-             al[i].isActive=false;
+            al[i].isActive=false;
+            al2[i].isActive=false;
+            al3[i].isActive=false;
           }
         al[i].nt = i;
+        al2[i].nt = i;
+        al3[i].nt = i;
       }
     my_peer = new Socket_io::MyPeer;
     my_peer->n = 0;
@@ -147,23 +151,20 @@ namespace ns3
 
     while ((packet = socket->RecvFrom(from)))
       {
-
         if(packet->PeekPacketTag (tag))
           {
             if (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO && packet != NULL)
               {
-
                 //printf("g");
                 pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
-                pbb.new_packet_tag.nt = tag.GetTreeNumber ();
-                int nt = pbb.new_packet_tag.nt; // ree number of current packet for this peer. in this case, always equals to 1
                 pbb.new_packet_tag.seq_number = tag.GetSeqNumber ();
-                pbb.new_packet_tag.next = NULL;
                 pbb.new_packet_tag.nodeId = tag.GetNodeId ();
                 pbb.new_packet_tag.packet_id = tag.GetpacketId ();
-                //pbb.new_packet_tag.sender_addr =
                 pbb.new_packet_tag.timestamp = tag.GetTimestamp ();
-
+                pbb.new_packet_tag.nt = tag.GetTreeNumber ();
+                int nt = pbb.new_packet_tag.nt; // ree number of current packet for this peer. in this case, always equals to 1
+                std::memcpy(pbb.new_packet_tag.sourceAddr, tag.sourceAddr, sizeof(pbb.new_packet_tag.sourceAddr));
+                pbb.new_packet_tag.next = NULL;
                 /*
                 NS_LOG_INFO(TEAL_CODE << "HandleReadOne: node " << GetNode ()->GetId ()<< " Received " << packet->GetSize() << " bytes"
                             << " at time " << Now().GetSeconds ()<< " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
@@ -193,34 +194,92 @@ namespace ns3
                 if (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO)
                   {
 
-                    if ((al[nt].isActive) && (!al[nt].isStarted))
-                    {
-                        al[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
-                        al[nt].isStarted = true;
-                    }
+                    //printf("the node id is: %" PRIu32, pbb.new_packet_tag.nodeId);
+                    if (pbb.new_packet_tag.nodeId == 1)
+                      {
+                        if ((al[nt].isActive) && (!al[nt].isStarted))
+                          {
+                            al[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                            al[nt].isStarted = true;
+                          }
+                      }
+                    if (pbb.new_packet_tag.nodeId == 2)
+                      {
+                        if ((al2[nt].isActive) && (!al2[nt].isStarted))
+                          {
+                            al2[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                            al2[nt].isStarted = true;
+                          }
+                      }
+                    if (pbb.new_packet_tag.nodeId == 3)
+                      {
+                        if ((al3[nt].isActive) && (!al3[nt].isStarted))
+                          {
+                            al3[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                            al3[nt].isStarted = true;
+                          }
+                      }
+
 
                     //my_peer->parent[MTR]->ping_n = 0;//a number of activity requests (if ping_n=0 then OK)
                     //my_peer->parent[MTR]->ping_t = skt_io->GetTickCount();
 
-                  }
-                if ((al[nt].isActive) && (tag.GetpacketId () == IDM_UDP_ARQ_VIDEO))
-                {
-                    //arq lines for packets with "nt" from 0 to mtratio-1
-                    al[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
-                    if (al[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                    if ((al[nt].isActive) && pbb.new_packet_tag.nodeId == 1)
                       {
-                        al[nt].check();
-                      }
-                    for (int i=0 ;i < MTR; i++)
-                        if (al[i].isActive)
+                        //arq lines for packets with "nt" from 0 to mtratio-1
+                        al[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                        if (al[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
                           {
-                            //printf("isFirstPacket\n");
-
-                            Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
-                            //NackDataTag nack_tag;
-                            al[i].send_nack(m_destination_addrs[0] , m_port1, &ctrl_c, nack, m_send_socket);
+                            al[nt].check();
                           }
-                }
+                        for (int i=0 ;i < MTR; i++)
+                          if (al[i].isActive)
+                            {
+                              //printf("isFirstPacket\n");
+
+                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                              //NackDataTag nack_tag;
+                              al[i].send_nack(m_destination_addrs[0] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                            }
+                      }
+                    if ((al2[nt].isActive) && pbb.new_packet_tag.nodeId == 2)
+                      {
+                        //arq lines for packets with "nt" from 0 to mtratio-1
+                        al2[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                        if (al2[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                          {
+                            al2[nt].check();
+                          }
+                        for (int i=0 ;i < MTR; i++)
+                          if (al2[i].isActive)
+                            {
+                              //printf("isFirstPacket\n");
+
+                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                              //NackDataTag nack_tag;
+                              al2[i].send_nack(m_destination_addrs[1] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                            }
+                      }
+                    if ((al3[nt].isActive) && pbb.new_packet_tag.nodeId == 3)
+                      {
+                        //arq lines for packets with "nt" from 0 to mtratio-1
+                        al3[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                        if (al3[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                          {
+                            al3[nt].check();
+                          }
+                        for (int i=0 ;i < MTR; i++)
+                          if (al3[i].isActive)
+                            {
+                              //printf("isFirstPacket\n");
+
+                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                              //NackDataTag nack_tag;
+                              al3[i].send_nack(m_destination_addrs[2] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                            }
+                      }
+                  }
+
 
               }
           }
@@ -230,26 +289,9 @@ namespace ns3
           }
 
       }
-   // m_recv_socket1->SetRecvCallback(MakeCallback(&SinkApplication::HandleReadOne, this));
+    // m_recv_socket1->SetRecvCallback(MakeCallback(&SinkApplication::HandleReadOne, this));
 
 
-  }
-
-
-  void SinkApplication::SendNack (uint32_t seq_number)
-  {
-
-    //NS_LOG_FUNCTION (this << m_my_addr << m_port1 );
-    Ptr<Packet> nack = Create<Packet>(80);
-    NackDataTag tag;
-    tag.SetNodeId (this->GetNode ()->GetId ());
-    tag.SetTimestamp (Now ());
-    tag.SetSeqNumber (seq_number);
-    nack->AddPacketTag (tag);
-
-    m_send_socket->Connect(InetSocketAddress(m_destination_addrs[0], m_port1));
-    m_send_socket->Send(nack);
-    //Simulator::Schedule(Seconds (3), &SinkApplication::SendPacket, this, packet); //, dest_ip, 7777);
   }
 
   void SinkApplication::print_results ()

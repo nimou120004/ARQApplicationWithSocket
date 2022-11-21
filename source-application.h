@@ -49,7 +49,7 @@ namespace ns3
 
       Time m_send_time; /**< How often do you broadcast messages */
       std::list<uint32_t> prevlist; /**< A list of requested packets*/
-
+      uint8_t sourceAddr[4];
       int packetsSend;
       int packetsRetransmitted;
 

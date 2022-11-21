@@ -22,7 +22,7 @@
 #define FEC_VIDEO_HDR_SIZE 5
 #define FEC_RED_HDR_SIZE   7
 
-#define MAX_PN	10000 //big int value which is 4294967295.
+#define MAX_PN	1000000 //big int value which is 4294967295.
 
 #define MTR				1	//multiple tree ratio
 #define MAX_ACCEPTED_PEERS 100

@@ -35,9 +35,9 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   //LogComponentEnable ("SourceApplication", LOG_LEVEL_INFO);
 
-  uint32_t nNodes = 2;
+  uint32_t nNodes = 4;
   double simTime = 60; //4 seconds
-  double distance = 40.0;
+  double distance = 37.0;
   bool enablePcap = false;
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);
@@ -97,64 +97,89 @@ int main (int argc, char *argv[])
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   Packet::EnablePrinting ();
 
+  // Create source application
 
-  //Create our Two UDP applications sink and source
-  Ptr <SinkApplication> appSink = CreateObject <SinkApplication> ();
   Ptr <SourceApplication> appSource = CreateObject <SourceApplication> ();
+  Ipv4Address dest_ip2 ("10.1.1.1");
+  appSource->SetDestinationAddr (dest_ip2);
+  Ipv4Address my_addr ("10.1.1.2");
+  appSource->SetMyAddr (my_addr);
+  appSource->SetStartTime (Seconds(2));
+  appSource->SetStopTime (Seconds (simTime));
+  nodes.Get(1)->AddApplication (appSource);
 
+  Ptr <SourceApplication> appSource2 = CreateObject <SourceApplication> ();
+  appSource2->SetDestinationAddr (dest_ip2);
+  my_addr.Set ("10.1.1.3");
+  appSource2->SetMyAddr (my_addr);
+  appSource2->SetStartTime (Seconds(2));
+  appSource2->SetStopTime (Seconds (simTime));
+  nodes.Get(2)->AddApplication (appSource2);
 
-  //Set up sink application
+  Ptr <SourceApplication> appSource3 = CreateObject <SourceApplication> ();
+  appSource3->SetDestinationAddr (dest_ip2);
+  my_addr.Set ("10.1.1.4");
+  appSource3->SetMyAddr (my_addr);
+  appSource3->SetStartTime (Seconds(2));
+  appSource3->SetStopTime (Seconds (simTime));
+  nodes.Get(3)->AddApplication (appSource3);
+
+  //Create sink application
+  Ptr <SinkApplication> appSink = CreateObject <SinkApplication> ();
   appSink->SetStartTime (Seconds(1));
   appSink->SetStopTime (Seconds (simTime));
   Ipv4Address my_ip("10.1.1.1");
   appSink->SetMyAddr (my_ip);
-  for(int i=1; i < (int)nodes.GetN (); i++)
+  my_addr.Set ("10.1.1.2");
+  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
+  my_addr.Set ("10.1.1.3");
+  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
+  my_addr.Set ("10.1.1.4");
+  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
+  nodes.Get(0)->AddApplication (appSink);
+
+  /*
+  for (uint32_t i = 1; i < nNodes; i++)
     {
-      //Ipv4Address dest_ip ("10.1.1."+(i+1));
+      Ptr <SourceApplication> appSource = CreateObject <SourceApplication> ();
+      Ipv4Address dest_ip2 ("10.1.1.1");
+      appSource->SetDestinationAddr (dest_ip2);
+      Ptr<Ipv4> ipv4 = nodes.Get (i)->GetObject<Ipv4>();
+      Ipv4InterfaceAddress iaddr = ipv4->GetAddress (1,0);
+      Ipv4Address my_addr = iaddr.GetLocal ();
+      appSource->SetMyAddr (my_addr);
+      appSource->SetStartTime (Seconds(2));
+      appSource->SetStopTime (Seconds (simTime));
+
+      nodes.Get(i)->AddApplication (appSource);
+
+    }
+
+
+  //Create sink application
+  Ptr <SinkApplication> appSink = CreateObject <SinkApplication> ();
+  appSink->SetStartTime (Seconds(1));
+  appSink->SetStopTime (Seconds (simTime));
+  Ipv4Address my_ip("10.1.1.1");
+  appSink->SetMyAddr (my_ip);
+  for(uint32_t i=1; i < nNodes; i++)
+    {
       Ptr<Ipv4> ipv4 = nodes.Get (i)->GetObject<Ipv4>();
       Ipv4InterfaceAddress iaddr = ipv4->GetAddress (0,0);
       Ipv4Address dest_ip = iaddr.GetLocal ();
-      appSink->m_destination_addrs.insert (appSink->m_destination_addrs.begin (),dest_ip);
+      appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),dest_ip);
     }
-
-  // Set up source application
-  appSource->SetStartTime (Seconds(2));
-  appSource->SetStopTime (Seconds (simTime));
-  Ipv4Address dest_ip2 ("10.1.1.1");
-  appSource->SetDestinationAddr (dest_ip2);
-  for(int i = 1; i<(int)nodes.GetN (); i++)
-    {
-      //Ipv4Address my_addr2("10.1.1." + (i+1));
-      Ptr<Ipv4> ipv4 = nodes.Get (i)->GetObject<Ipv4>();
-      Ipv4InterfaceAddress iaddr = ipv4->GetAddress (0,0);
-      Ipv4Address my_addr2 = iaddr.GetLocal ();
-      appSource->SetMyAddr (my_addr2);
-      nodes.Get(i)->AddApplication (appSource);
-    }
-
-
-  //install one application at node 0, and the other at node n
   nodes.Get(0)->AddApplication (appSink);
- /* for (int i = 1; i < (int)nodes.GetN (); i++)
-    {
-      nodes.Get(i)->AddApplication (appSource);
-    }
+
 */
-
-
 
   LogComponentEnable ("SourceApplication", LOG_LEVEL_ALL);
   LogComponentEnable ("SinkApplication", LOG_LEVEL_ALL);
 
-
-
-  //Simulator::Schedule (Seconds (2), &SinkApplication::HandleReadOne, appSink->m_recv_socket1, appSink);
-
-  for (int i = 0; i < 500; i++)
-    {
-      Simulator::Schedule (Seconds (3 + (i * 0.01)), &SourceApplication::check_udp_socket, appSource);
-    }
-
+//  for (int i = 0; i < 500; i++)
+//    {
+//      Simulator::Schedule (Seconds (3 + (i * 0.01)), &SourceApplication::check_udp_socket, appSource);
+//    }
 
   AnimationInterface anim("animARQ.xml");
   anim.SetConstantPosition (nodes.Get (0), 0.0, 0.0);
@@ -167,7 +192,7 @@ int main (int argc, char *argv[])
   Simulator::Stop (Seconds (simTime));
   Simulator::Run ();
 
-  appSource->print_results ();
+  //appSource->print_results ();
 
   appSink->print_results ();
 

@@ -1,6 +1,8 @@
 #include "arq_line_socket.h"
 #include "socket_io.h"
 #include "simple_c.h"
+#include "inttypes.h"
+#include "iostream"
 
 
 
@@ -238,7 +240,7 @@ namespace ns3 {
       }
   }
 
-  int arq_line_socket::send_nack(Ipv4Address m_destination_addr, uint16_t m_port1, simple_c *ctrl_c, Ptr<Packet> nack, Ptr<Socket> m_send_socket)
+  int arq_line_socket::send_nack(Ipv4Address m_destination_addr, uint16_t m_port1, simple_c *ctrl_c, Ptr<Packet> nack, Ptr<Socket> m_send_socket, uint32_t nodeId)
   {
     int tw;
     int i;
@@ -299,7 +301,9 @@ namespace ns3 {
                         else
                           {
                             //fprintf(file,"\n");
-                            printf(" N%d ",wg[aowg - 1].nr);
+                            //std::ostream str;
+                            //std::cout << m_destination_addr;
+                            printf(" N%d-id%" PRIu32,wg[aowg - 1].nr, nodeId);
                           }
 
                       }
@@ -354,7 +358,8 @@ namespace ns3 {
                 else
                   {
                     //fprintf(file,"\n");
-                    printf(" N%d ",wg[aowg - 1].nr);
+                    //std::cout << m_destination_addr;
+                    printf(" N%d-id%" PRIu32,wg[aowg - 1].nr, nodeId );
                   }
               }
             else

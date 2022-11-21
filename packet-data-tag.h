@@ -35,7 +35,6 @@ public:
 	int GetNumberOfRepeat();
 	uint8_t GetTreeNumber();
 
-
 	//void SetPosition (Vector pos);
 	void SetNodeId (uint32_t node_id);
 	void SetTimestamp (Time t);
@@ -44,6 +43,7 @@ public:
 	void SetPacketId(int pkt_id);
 	void SetNumberOfRepeat(int nr);
 	void SetTreeNumber (uint8_t tree_number);
+	uint8_t sourceAddr[4];
 
 
 	PacketDataTag();
@@ -66,6 +66,7 @@ private:
 	uint32_t number_of_repeat;
 	/** tree number of this arq line */
 	uint8_t nt;
+
 
 
 

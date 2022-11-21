@@ -10,6 +10,7 @@ NS_OBJECT_ENSURE_REGISTERED (PacketDataTag);
 PacketDataTag::PacketDataTag() {
 	timestamp = Simulator::Now();
 	m_nodeId = -1;
+	//sourceAddr = new uint8_t[4];
 }
 PacketDataTag::PacketDataTag(uint32_t node_id) {
 	timestamp = Simulator::Now();
@@ -42,7 +43,7 @@ uint32_t PacketDataTag::GetSerializedSize (void) const
 {
         return sizeof(Vector) + sizeof (ns3::Time) + sizeof(uint32_t) +
             sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) +
-            sizeof(uint8_t);
+            sizeof(uint8_t) + sizeof(uint8_t[4]);
 }
 /**
  * The order of how you do Serialize() should match the order of Deserialize()
@@ -65,6 +66,11 @@ void PacketDataTag::Serialize (TagBuffer i) const
 	i.WriteU32 (packet_id);
 	i.WriteU32(number_of_repeat);
 	i.WriteU8 (nt);
+	for(int k = 0; k < 4; k++)
+	  {
+	    i.WriteU8 (sourceAddr[k]);
+	  }
+
 
 }
 /** This function reads data from a buffer and store it in class's instance variables.
@@ -86,6 +92,10 @@ void PacketDataTag::Deserialize (TagBuffer i)
 	packet_id = i.ReadU32 ();
 	number_of_repeat = i.ReadU32 ();
 	nt = i.ReadU8 ();
+	for (int k = 0; k < 4; k++)
+	  {
+	    sourceAddr[k] = i.ReadU8 ();
+	  }
 
 }
 /**
@@ -155,12 +165,12 @@ void PacketDataTag::SetNumberOfRepeat (int nr){
 
 uint8_t PacketDataTag::GetTreeNumber()
 {
-        return nt;
+  return nt;
 }
 
 void PacketDataTag::SetTreeNumber (uint8_t tree_number)
 {
-        nt = tree_number;
+  nt = tree_number;
 }
 
 

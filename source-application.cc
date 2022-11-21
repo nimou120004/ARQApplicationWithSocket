@@ -118,6 +118,10 @@ namespace ns3
     m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
     //Simulator::Schedule(Seconds (3), &SourceApplication::check_udp_socket, this);
     //this->check_udp_socket ();
+    for (int i = 0; i < 1000; i++)
+      {
+        Simulator::Schedule (Seconds (3 + (i * 0.01)), &SourceApplication::check_udp_socket, this);
+      }
 
   }
 
@@ -144,6 +148,7 @@ namespace ns3
         tag.SetPacketId (IDM_UDP_ARQ_VIDEO);
         tag.SetTimestamp (Simulator::Now ());
         tag.SetTreeNumber (0);
+        m_my_addr.Serialize (tag.sourceAddr);
         packet->AddPacketTag (tag);
 
         pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
@@ -152,6 +157,7 @@ namespace ns3
         pbb.new_packet_tag.packet_id = tag.GetpacketId ();
         pbb.new_packet_tag.timestamp = tag.GetTimestamp ();
         pbb.new_packet_tag.nt = tag.GetTreeNumber ();
+        std::memcpy(pbb.new_packet_tag.sourceAddr, tag.sourceAddr, sizeof(tag.sourceAddr));
         pbb.new_packet_tag.next = NULL;
         pbb.shift_buffer ();
         if (g.getState ())
@@ -164,7 +170,7 @@ namespace ns3
                 packetsSend++;
                 //printf (".");
                 printf (PURPLE_CODE);
-                printf (" %" PRIu32, tag.GetSeqNumber ());
+                printf (" %" PRIu32, tag.GetSeqNumber());
                 printf (END_CODE);
               }
 
@@ -190,7 +196,7 @@ namespace ns3
   void SourceApplication::HandleReadTwo(Ptr<Socket> socket)
   {
     //NS_LOG_FUNCTION(this << socket);
-    printf(" recvNack");
+    //printf(" recvNack");
     Ptr<Packet> packet;
     Address from;
     Address localAddress;
@@ -235,6 +241,7 @@ namespace ns3
                             tag.SetPacketId (pbb.new_packet_tag.packet_id);
                             tag.SetTimestamp (pbb.new_packet_tag.timestamp);
                             tag.SetTreeNumber (pbb.new_packet_tag.nt);
+                            std::memcpy(tag.sourceAddr, pbb.new_packet_tag.sourceAddr, sizeof(pbb.new_packet_tag.sourceAddr));
                             req_packet->AddPacketTag (tag);
                             if (this->SendPacket (req_packet) == EXIT_SUCCESS)
                               {

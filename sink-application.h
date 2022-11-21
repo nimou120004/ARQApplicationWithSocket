@@ -32,10 +32,6 @@ namespace ns3
        */
       void HandleReadOne (Ptr<Socket> socket);
 
-      /** \brief Send nack packet. This creates a new socket every time (not the best solution)
-      */
-      void SendNack (uint32_t seq_number);
-
       void print_results ();
       //void SetDestinationAddr(Ipv4Address dest_addr);
 
@@ -80,7 +76,7 @@ namespace ns3
       uint32_t m_number_of_packets_to_send;
       uint32_t prev; /**< Sequence number of the previous received packet */
       Ptr<Socket> m_send_socket; /**< A socket to listen on a specific port */
-      arq_line_socket al[MTR]; /**< arq lines for each parent peer */
+      arq_line_socket al[MTR], al2[MTR], al3[MTR]; /**< arq lines for each parent peer */
       PlaybackBuffer pbb; /**< playback buffer for reordering received packets */
       gilbert_Elliott g[MTR];  /** < Gilbert model for packet loss simulation */
       double ploss, lb; /** < packet loss rate and burst loss for Gilbert-Elliott model */
