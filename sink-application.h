@@ -76,7 +76,7 @@ namespace ns3
       uint32_t m_number_of_packets_to_send;
       uint32_t prev; /**< Sequence number of the previous received packet */
       Ptr<Socket> m_send_socket; /**< A socket to listen on a specific port */
-      arq_line_socket al[MTR], al2[MTR], al3[MTR], al4[MTR], al5[MTR]; /**< arq lines for each parent peer */
+      arq_line_socket al[MTR], al2[MTR], al3[MTR], al4[MTR], al5[MTR], al6[MTR], al7[MTR], al8[MTR], al9[MTR], al10[MTR]; /**< arq lines for each parent peer */
       PlaybackBuffer pbb; /**< playback buffer for reordering received packets */
       gilbert_Elliott g[MTR];  /** < Gilbert model for packet loss simulation */
       double ploss, lb; /** < packet loss rate and burst loss for Gilbert-Elliott model */

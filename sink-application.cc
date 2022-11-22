@@ -69,6 +69,11 @@ namespace ns3
             al3[i].isActive=false;
             al4[i].isActive=false;
             al5[i].isActive=false;
+            al6[i].isActive=false;
+            al7[i].isActive=false;
+            al8[i].isActive=false;
+            al9[i].isActive=false;
+            al10[i].isActive=false;
 
           }
         al[i].nt = i;
@@ -76,6 +81,11 @@ namespace ns3
         al3[i].nt = i;
         al4[i].nt = i;
         al5[i].nt = i;
+        al6[i].nt = i;
+        al7[i].nt = i;
+        al8[i].nt = i;
+        al9[i].nt = i;
+        al10[i].nt = i;
       }
     my_peer = new Socket_io::MyPeer;
     my_peer->n = 0;
@@ -240,6 +250,46 @@ namespace ns3
                             al5[nt].isStarted = true;
                           }
                       }
+                    if (pbb.new_packet_tag.nodeId == 6)
+                      {
+                        if ((al6[nt].isActive) && (!al6[nt].isStarted))
+                          {
+                            al6[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                            al6[nt].isStarted = true;
+                          }
+                      }
+                    if (pbb.new_packet_tag.nodeId == 7)
+                      {
+                        if ((al7[nt].isActive) && (!al7[nt].isStarted))
+                          {
+                            al7[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                            al7[nt].isStarted = true;
+                          }
+                      }
+                    if (pbb.new_packet_tag.nodeId == 8)
+                      {
+                        if ((al8[nt].isActive) && (!al8[nt].isStarted))
+                          {
+                            al8[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                            al8[nt].isStarted = true;
+                          }
+                      }
+                    if (pbb.new_packet_tag.nodeId == 9)
+                      {
+                        if ((al9[nt].isActive) && (!al9[nt].isStarted))
+                          {
+                            al9[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                            al9[nt].isStarted = true;
+                          }
+                      }
+                    if (pbb.new_packet_tag.nodeId == 10)
+                      {
+                        if ((al10[nt].isActive) && (!al10[nt].isStarted))
+                          {
+                            al10[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                            al10[nt].isStarted = true;
+                          }
+                      }
 
 
                     //my_peer->parent[MTR]->ping_n = 0;//a number of activity requests (if ping_n=0 then OK)
@@ -333,6 +383,96 @@ namespace ns3
                               Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
                               //NackDataTag nack_tag;
                               al5[i].send_nack(m_destination_addrs[4] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                            }
+                      }
+                    if ((al6[nt].isActive) && pbb.new_packet_tag.nodeId == 6)
+                      {
+                        //arq lines for packets with "nt" from 0 to mtratio-1
+                        al6[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                        if (al6[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                          {
+                            al6[nt].check();
+                          }
+                        for (int i=0 ;i < MTR; i++)
+                          if (al6[i].isActive)
+                            {
+                              //printf("isFirstPacket\n");
+
+                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                              //NackDataTag nack_tag;
+                              al6[i].send_nack(m_destination_addrs[5] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                            }
+                      }
+                    if ((al7[nt].isActive) && pbb.new_packet_tag.nodeId == 7)
+                      {
+                        //arq lines for packets with "nt" from 0 to mtratio-1
+                        al7[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                        if (al7[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                          {
+                            al7[nt].check();
+                          }
+                        for (int i=0 ;i < MTR; i++)
+                          if (al7[i].isActive)
+                            {
+                              //printf("isFirstPacket\n");
+
+                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                              //NackDataTag nack_tag;
+                              al7[i].send_nack(m_destination_addrs[6] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                            }
+                      }
+                    if ((al8[nt].isActive) && pbb.new_packet_tag.nodeId == 8)
+                      {
+                        //arq lines for packets with "nt" from 0 to mtratio-1
+                        al8[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                        if (al8[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                          {
+                            al8[nt].check();
+                          }
+                        for (int i=0 ;i < MTR; i++)
+                          if (al8[i].isActive)
+                            {
+                              //printf("isFirstPacket\n");
+
+                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                              //NackDataTag nack_tag;
+                              al8[i].send_nack(m_destination_addrs[7] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                            }
+                      }
+                    if ((al9[nt].isActive) && pbb.new_packet_tag.nodeId == 9)
+                      {
+                        //arq lines for packets with "nt" from 0 to mtratio-1
+                        al9[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                        if (al9[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                          {
+                            al9[nt].check();
+                          }
+                        for (int i=0 ;i < MTR; i++)
+                          if (al9[i].isActive)
+                            {
+                              //printf("isFirstPacket\n");
+
+                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                              //NackDataTag nack_tag;
+                              al9[i].send_nack(m_destination_addrs[8] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                            }
+                      }
+                    if ((al10[nt].isActive) && pbb.new_packet_tag.nodeId == 10)
+                      {
+                        //arq lines for packets with "nt" from 0 to mtratio-1
+                        al10[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                        if (al10[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                          {
+                            al10[nt].check();
+                          }
+                        for (int i=0 ;i < MTR; i++)
+                          if (al10[i].isActive)
+                            {
+                              //printf("isFirstPacket\n");
+
+                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                              //NackDataTag nack_tag;
+                              al10[i].send_nack(m_destination_addrs[9] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
                             }
                       }
                   }
