@@ -118,7 +118,7 @@ namespace ns3
     m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
     //Simulator::Schedule(Seconds (3), &SourceApplication::check_udp_socket, this);
     //this->check_udp_socket ();
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 500; i++)
       {
         Simulator::Schedule (Seconds (3 + (i * 0.01)), &SourceApplication::check_udp_socket, this);
       }

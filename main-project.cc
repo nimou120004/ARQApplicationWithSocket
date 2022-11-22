@@ -35,7 +35,7 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   //LogComponentEnable ("SourceApplication", LOG_LEVEL_INFO);
 
-  uint32_t nNodes = 4;
+  uint32_t nNodes = 6;
   double simTime = 60; //4 seconds
   double distance = 37.0;
   bool enablePcap = false;
@@ -112,7 +112,7 @@ int main (int argc, char *argv[])
   appSource2->SetDestinationAddr (dest_ip2);
   my_addr.Set ("10.1.1.3");
   appSource2->SetMyAddr (my_addr);
-  appSource2->SetStartTime (Seconds(2));
+  appSource2->SetStartTime (Seconds(2.1));
   appSource2->SetStopTime (Seconds (simTime));
   nodes.Get(2)->AddApplication (appSource2);
 
@@ -120,9 +120,25 @@ int main (int argc, char *argv[])
   appSource3->SetDestinationAddr (dest_ip2);
   my_addr.Set ("10.1.1.4");
   appSource3->SetMyAddr (my_addr);
-  appSource3->SetStartTime (Seconds(2));
+  appSource3->SetStartTime (Seconds(2.2));
   appSource3->SetStopTime (Seconds (simTime));
   nodes.Get(3)->AddApplication (appSource3);
+
+  Ptr <SourceApplication> appSource4 = CreateObject <SourceApplication> ();
+  appSource4->SetDestinationAddr (dest_ip2);
+  my_addr.Set ("10.1.1.5");
+  appSource4->SetMyAddr (my_addr);
+  appSource4->SetStartTime (Seconds(2.3));
+  appSource4->SetStopTime (Seconds (simTime));
+  nodes.Get(4)->AddApplication (appSource4);
+
+  Ptr <SourceApplication> appSource5 = CreateObject <SourceApplication> ();
+  appSource5->SetDestinationAddr (dest_ip2);
+  my_addr.Set ("10.1.1.6");
+  appSource5->SetMyAddr (my_addr);
+  appSource5->SetStartTime (Seconds(2.4));
+  appSource5->SetStopTime (Seconds (simTime));
+  nodes.Get(5)->AddApplication (appSource5);
 
   //Create sink application
   Ptr <SinkApplication> appSink = CreateObject <SinkApplication> ();
@@ -136,6 +152,11 @@ int main (int argc, char *argv[])
   appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
   my_addr.Set ("10.1.1.4");
   appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
+  my_addr.Set ("10.1.1.5");
+  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
+  my_addr.Set ("10.1.1.6");
+  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
+
   nodes.Get(0)->AddApplication (appSink);
 
   /*
