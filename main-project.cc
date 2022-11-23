@@ -22,20 +22,10 @@ This example illustrates the use of udp ARQ Applications (client/server). It sho
 
 int main (int argc, char *argv[])
 {
-  /*
-  CommandLine cmd;
-  cmd.Parse (argc, argv);
-  NodeContainer nodes;
-  nodes.Create (4);
-
-  CsmaHelper csma;
-  csma.SetChannelAttribute ("DataRate", StringValue ("1Gbps"));
-  csma.SetChannelAttribute ("Delay", TimeValue (NanoSeconds(6560)));
-  */
   CommandLine cmd;
   //LogComponentEnable ("SourceApplication", LOG_LEVEL_INFO);
 
-  uint32_t nNodes = 11;
+  uint32_t nNodes = 7;
   double simTime = 60; //4 seconds
   double distance = 37.0;
   bool enablePcap = false;
@@ -98,159 +88,38 @@ int main (int argc, char *argv[])
   Packet::EnablePrinting ();
 
   // Create source application
-
-  Ptr <SourceApplication> appSource = CreateObject <SourceApplication> ();
-  Ipv4Address dest_ip2 ("10.1.1.1");
-  appSource->SetDestinationAddr (dest_ip2);
-  Ipv4Address my_addr ("10.1.1.2");
-  appSource->SetMyAddr (my_addr);
-  appSource->SetStartTime (Seconds(1.5));
-  appSource->SetStopTime (Seconds (simTime));
-  nodes.Get(1)->AddApplication (appSource);
-
-  Ptr <SourceApplication> appSource2 = CreateObject <SourceApplication> ();
-  appSource2->SetDestinationAddr (dest_ip2);
-  my_addr.Set ("10.1.1.3");
-  appSource2->SetMyAddr (my_addr);
-  appSource2->SetStartTime (Seconds(1.6));
-  appSource2->SetStopTime (Seconds (simTime));
-  nodes.Get(2)->AddApplication (appSource2);
-
-  Ptr <SourceApplication> appSource3 = CreateObject <SourceApplication> ();
-  appSource3->SetDestinationAddr (dest_ip2);
-  my_addr.Set ("10.1.1.4");
-  appSource3->SetMyAddr (my_addr);
-  appSource3->SetStartTime (Seconds(1.7));
-  appSource3->SetStopTime (Seconds (simTime));
-  nodes.Get(3)->AddApplication (appSource3);
-
-  Ptr <SourceApplication> appSource4 = CreateObject <SourceApplication> ();
-  appSource4->SetDestinationAddr (dest_ip2);
-  my_addr.Set ("10.1.1.5");
-  appSource4->SetMyAddr (my_addr);
-  appSource4->SetStartTime (Seconds(1.8));
-  appSource4->SetStopTime (Seconds (simTime));
-  nodes.Get(4)->AddApplication (appSource4);
-
-  Ptr <SourceApplication> appSource5 = CreateObject <SourceApplication> ();
-  appSource5->SetDestinationAddr (dest_ip2);
-  my_addr.Set ("10.1.1.6");
-  appSource5->SetMyAddr (my_addr);
-  appSource5->SetStartTime (Seconds(1.9));
-  appSource5->SetStopTime (Seconds (simTime));
-  nodes.Get(5)->AddApplication (appSource5);
-
-  Ptr <SourceApplication> appSource6 = CreateObject <SourceApplication> ();
-  appSource6->SetDestinationAddr (dest_ip2);
-  my_addr.Set ("10.1.1.7");
-  appSource6->SetMyAddr (my_addr);
-  appSource6->SetStartTime (Seconds(2));
-  appSource6->SetStopTime (Seconds (simTime));
-  nodes.Get(6)->AddApplication (appSource6);
-
-  Ptr <SourceApplication> appSource7 = CreateObject <SourceApplication> ();
-  appSource7->SetDestinationAddr (dest_ip2);
-  my_addr.Set ("10.1.1.8");
-  appSource7->SetMyAddr (my_addr);
-  appSource7->SetStartTime (Seconds(2.1));
-  appSource7->SetStopTime (Seconds (simTime));
-  nodes.Get(7)->AddApplication (appSource7);
-
-  Ptr <SourceApplication> appSource8 = CreateObject <SourceApplication> ();
-  appSource8->SetDestinationAddr (dest_ip2);
-  my_addr.Set ("10.1.1.9");
-  appSource8->SetMyAddr (my_addr);
-  appSource8->SetStartTime (Seconds(2.2));
-  appSource8->SetStopTime (Seconds (simTime));
-  nodes.Get(8)->AddApplication (appSource8);
-
-  Ptr <SourceApplication> appSource9 = CreateObject <SourceApplication> ();
-  appSource9->SetDestinationAddr (dest_ip2);
-  my_addr.Set ("10.1.1.10");
-  appSource9->SetMyAddr (my_addr);
-  appSource9->SetStartTime (Seconds(2.3));
-  appSource9->SetStopTime (Seconds (simTime));
-  nodes.Get(9)->AddApplication (appSource9);
-
-  Ptr <SourceApplication> appSource10 = CreateObject <SourceApplication> ();
-  appSource10->SetDestinationAddr (dest_ip2);
-  my_addr.Set ("10.1.1.11");
-  appSource10->SetMyAddr (my_addr);
-  appSource10->SetStartTime (Seconds(2.4));
-  appSource10->SetStopTime (Seconds (simTime));
-  nodes.Get(10)->AddApplication (appSource10);
-
-  //Create sink application
-  Ptr <SinkApplication> appSink = CreateObject <SinkApplication> ();
-  appSink->SetStartTime (Seconds(1));
-  appSink->SetStopTime (Seconds (simTime));
-  Ipv4Address my_ip("10.1.1.1");
-  appSink->SetMyAddr (my_ip);
-  my_addr.Set ("10.1.1.2");
-  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
-  my_addr.Set ("10.1.1.3");
-  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
-  my_addr.Set ("10.1.1.4");
-  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
-  my_addr.Set ("10.1.1.5");
-  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
-  my_addr.Set ("10.1.1.6");
-  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
-  my_addr.Set ("10.1.1.7");
-  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
-  my_addr.Set ("10.1.1.8");
-  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
-  my_addr.Set ("10.1.1.9");
-  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
-  my_addr.Set ("10.1.1.10");
-  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
-  my_addr.Set ("10.1.1.11");
-  appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),my_addr);
-
-  nodes.Get(0)->AddApplication (appSink);
-
-  /*
-  for (uint32_t i = 1; i < nNodes; i++)
+  std::vector<Ipv4Address> srcAddresses;
+  Ipv4Address dest_ip ("10.1.1.1");
+  for (int i = 1; i < (int)nNodes; i++)
     {
       Ptr <SourceApplication> appSource = CreateObject <SourceApplication> ();
-      Ipv4Address dest_ip2 ("10.1.1.1");
-      appSource->SetDestinationAddr (dest_ip2);
-      Ptr<Ipv4> ipv4 = nodes.Get (i)->GetObject<Ipv4>();
-      Ipv4InterfaceAddress iaddr = ipv4->GetAddress (1,0);
-      Ipv4Address my_addr = iaddr.GetLocal ();
+      std:: string str = "10.1.1.";
+      appSource->SetDestinationAddr (dest_ip);
+      str = str + std::to_string (i+1);
+      Ipv4Address my_addr (str.c_str ());
       appSource->SetMyAddr (my_addr);
-      appSource->SetStartTime (Seconds(2));
+      srcAddresses.insert (srcAddresses.end (), my_addr);
+      appSource->SetStartTime (Seconds(1 + 0.2*i));
       appSource->SetStopTime (Seconds (simTime));
-
       nodes.Get(i)->AddApplication (appSource);
-
     }
 
-
   //Create sink application
+  Ipv4Address my_addr ("10.1.1.2");
   Ptr <SinkApplication> appSink = CreateObject <SinkApplication> ();
   appSink->SetStartTime (Seconds(1));
   appSink->SetStopTime (Seconds (simTime));
   Ipv4Address my_ip("10.1.1.1");
   appSink->SetMyAddr (my_ip);
-  for(uint32_t i=1; i < nNodes; i++)
+  for (uint32_t i = 0; i < srcAddresses.size (); i++)
     {
-      Ptr<Ipv4> ipv4 = nodes.Get (i)->GetObject<Ipv4>();
-      Ipv4InterfaceAddress iaddr = ipv4->GetAddress (0,0);
-      Ipv4Address dest_ip = iaddr.GetLocal ();
-      appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (),dest_ip);
+      appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (), srcAddresses[i]);
     }
   nodes.Get(0)->AddApplication (appSink);
 
-*/
 
   LogComponentEnable ("SourceApplication", LOG_LEVEL_ALL);
   LogComponentEnable ("SinkApplication", LOG_LEVEL_ALL);
-
-//  for (int i = 0; i < 500; i++)
-//    {
-//      Simulator::Schedule (Seconds (3 + (i * 0.01)), &SourceApplication::check_udp_socket, appSource);
-//    }
 
   AnimationInterface anim("animARQ.xml");
   anim.SetConstantPosition (nodes.Get (0), 0.0, 0.0);

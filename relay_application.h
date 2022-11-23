@@ -1,5 +1,7 @@
-#ifndef NS3_SOURCE_ARQ_APPLICATION_H
-#define NS3_SOURCE_ARQ_APPLICATION_H
+#ifndef RELAY_APPLICATION_H
+#define RELAY_APPLICATION_H
+
+
 #include "ns3/socket.h"
 #include "ns3/application.h"
 #include "packet-data-tag.h"
@@ -14,11 +16,11 @@ using namespace ns3;
 
 namespace ns3
 {
-  class SourceApplication : public Application
+  class RelayApplication : public Application
   {
   public:
-    SourceApplication ();
-    virtual ~SourceApplication ();
+    RelayApplication ();
+    virtual ~RelayApplication ();
 
     // to integrate with ns3 we should use GetTypeId method
     static TypeId GetTypeId ();
@@ -52,7 +54,6 @@ namespace ns3
     uint8_t sourceAddr[4];
     int packetsSend;
     int packetsRetransmitted;
-    uint32_t nodeId;
 
   private:
 
@@ -65,7 +66,7 @@ namespace ns3
     Ptr<Socket> m_recv_socket2; /**< A socket to receive on a specific port */
     uint16_t m_port1;
     uint16_t m_port2;
-    double ploss, lb; /**< packet loss rate and burst loss for Gilbert-Elliott model */
+    double ploss, lb; // packet loss rate and burst loss for Gilbert-Elliott model
 
     // Ptr<MyHeader> arqHeader;
     Ipv4Address m_destination_addr;
@@ -88,4 +89,4 @@ namespace ns3
   };
 }
 
-#endif
+#endif // RELAY_APPLICATION_H

@@ -1,3 +1,5 @@
+#include "relay_application.h"
+
 #include "ns3/log.h"
 #include "source-application.h"
 #include "ns3/udp-socket.h"
@@ -28,26 +30,26 @@
 
 namespace ns3
 {
-  NS_LOG_COMPONENT_DEFINE("SourceApplication");
-  NS_OBJECT_ENSURE_REGISTERED(SourceApplication);
+  NS_LOG_COMPONENT_DEFINE("RelayApplication");
+  NS_OBJECT_ENSURE_REGISTERED(RelayApplication);
 
   TypeId
-  SourceApplication::GetTypeId()
+  RelayApplication::GetTypeId()
   {
-    static TypeId tid = TypeId("ns3::SourceApplication")
-        .AddConstructor<SourceApplication>()
+    static TypeId tid = TypeId("ns3::RelayApplication")
+        .AddConstructor<RelayApplication>()
         .SetParent<Application>();
     return tid;
   }
 
   TypeId
-  SourceApplication::GetInstanceTypeId() const
+  RelayApplication::GetInstanceTypeId() const
   {
-    return SourceApplication::GetTypeId();
+    return RelayApplication::GetTypeId();
   }
 
   //Constructor
-  SourceApplication::SourceApplication()
+  RelayApplication::RelayApplication()
   {
     m_port1 = 7777;
     m_port2 = 9999;
@@ -67,16 +69,14 @@ namespace ns3
         root->child[i] = NULL;
       }
 
-
   }
 
   //Destructor
-  SourceApplication::~SourceApplication()
+  RelayApplication::~RelayApplication()
   {
-    SourceApplication::print_results();
   }
 
-  void SourceApplication::SetupReceiveSocket(Ptr<Socket> socket, Ipv4Address myAddr, uint16_t port)
+  void RelayApplication::SetupReceiveSocket(Ptr<Socket> socket, Ipv4Address myAddr, uint16_t port)
   {
     InetSocketAddress local = InetSocketAddress(myAddr, port);
     if (socket->Bind(local) == -1)
@@ -85,28 +85,27 @@ namespace ns3
       }
   }
 
-  void SourceApplication::SetDestinationAddr (Ipv4Address dest_addr){
+  void RelayApplication::SetDestinationAddr (Ipv4Address dest_addr){
     m_destination_addr = dest_addr;
   }
-  Ipv4Address SourceApplication::GetDestinationAddr (){
+  Ipv4Address RelayApplication::GetDestinationAddr (){
     return m_destination_addr;
   }
 
-  void SourceApplication::SetMyAddr (Ipv4Address my_addr){
+  void RelayApplication::SetMyAddr (Ipv4Address my_addr){
     m_my_addr = my_addr;
   }
-  Ipv4Address SourceApplication::GetMyAddr (){
+  Ipv4Address RelayApplication::GetMyAddr (){
     return m_my_addr;
   }
 
-  void SourceApplication::StartApplication()
+  void RelayApplication::StartApplication()
   {
 
-    nodeId = GetNode ()->GetId ();
     Ptr<UniformRandomVariable> rand = CreateObject<UniformRandomVariable> ();
     m_random_offset = MicroSeconds (rand->GetValue(2,10));
 
-    NS_LOG_FUNCTION("At time ... "  << Simulator::Now ().GetSeconds ()<< m_my_addr );
+    NS_LOG_FUNCTION("Start application ... " << m_my_addr);
 
     TypeId tid = TypeId::LookupByName("ns3::UdpSocketFactory");
     m_recv_socket1 = Socket::CreateSocket(GetNode(), tid);
@@ -118,17 +117,17 @@ namespace ns3
     //Send Socket
     m_send_socket = Socket::CreateSocket(GetNode(), tid);
 
-    m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
-    //Simulator::Schedule(Seconds (3), &SourceApplication::check_udp_socket, this);
+    m_recv_socket1->SetRecvCallback(MakeCallback(&RelayApplication::HandleReadTwo, this));
+    //Simulator::Schedule(Seconds (3), &RelayApplication::check_udp_socket, this);
     //this->check_udp_socket ();
-    for (int i = 0; i < 500; i++)
+    for (int i = 0; i < 10; i++)
       {
-        Simulator::Schedule (Seconds (3 + (i * 0.01)), &SourceApplication::check_udp_socket, this);
+        Simulator::Schedule (Seconds (3 + (i * 0.01)), &RelayApplication::check_udp_socket, this);
       }
 
   }
 
-  int SourceApplication::check_udp_socket ()
+  int RelayApplication::check_udp_socket ()
   {
     if(isStarted == false)
       {
@@ -184,19 +183,19 @@ namespace ns3
           }
 
      // }
-    //Simulator::Schedule(Seconds (4), &SourceApplication::check_udp_socket, this);
+    //Simulator::Schedule(Seconds (4), &RelayApplication::check_udp_socket, this);
 
 
     return EXIT_SUCCESS;
   }
 
-  void SourceApplication::print_results()
+  void RelayApplication::print_results()
   {
-    printf ("\nNode %d : Packets sent: %d \n",(int)nodeId, packetsSend);
-    printf ("Node %d : Packets retransmitted: %d \n",(int)nodeId, packetsRetransmitted);
+    printf ("\nPackets sent: %d \n", packetsSend);
+    printf ("Packets retransmitted: %d \n", packetsRetransmitted);
   }
 
-  void SourceApplication::HandleReadTwo(Ptr<Socket> socket)
+  void RelayApplication::HandleReadTwo(Ptr<Socket> socket)
   {
     //NS_LOG_FUNCTION(this << socket);
     //printf(" recvNack");
@@ -285,7 +284,7 @@ namespace ns3
       }
   }
 
-  int SourceApplication::SendPacket(Ptr<Packet> packet)
+  int RelayApplication::SendPacket(Ptr<Packet> packet)
   {
 
     //NS_LOG_FUNCTION (this << m_my_addr << m_port1 );
@@ -294,9 +293,11 @@ namespace ns3
     if(m_send_socket->Send(packet)> 0)
       return EXIT_SUCCESS;
     else return EXIT_FAILURE;
-    //Simulator::Schedule(Seconds (3), &SourceApplication::SendPacket, this, packet); //, dest_ip, 7777);
+    //Simulator::Schedule(Seconds (3), &RelayApplication::SendPacket, this, packet); //, dest_ip, 7777);
   }
 
 
 
 } // namespace ns3
+
+
