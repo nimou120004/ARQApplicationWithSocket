@@ -7,6 +7,7 @@
 #include "packet-data-tag.h"
 #include "playback_buffer.h"
 #include "gilbert_elliott.h"
+#include "arq_line_socket.h"
 #include <algorithm>
 
 
@@ -33,7 +34,7 @@ namespace ns3
 
     /** \brief Send an outgoing packet. This creates a new socket every time (not the best solution)
       */
-    int SendPacket (Ptr<Packet> packet);
+    int SendPacket (Ptr<Packet> packet, Ipv4Address to);
 
     /** \brief handle the transmission and processing of data packets
       */
@@ -47,6 +48,10 @@ namespace ns3
     void SetMyAddr(Ipv4Address my_addr);
     Ipv4Address GetMyAddr();
 
+    void SetSourceAddress(Ipv4Address src_addr);
+    Ipv4Address GetSourceAddress();
+
+
     Time m_random_offset;
 
     Time m_send_time; /**< How often do you broadcast messages */
@@ -54,10 +59,14 @@ namespace ns3
     uint8_t sourceAddr[4];
     int packetsSend;
     int packetsRetransmitted;
+    bool isArqEnabled;
+    int packets_received;
+    int packets_recovered;
 
   private:
 
 
+    arq_line_socket al[MTR];
     void SetupReceiveSocket (Ptr<Socket> socket, Ipv4Address myAddr, uint16_t port);
     virtual void StartApplication ();
 
@@ -66,11 +75,12 @@ namespace ns3
     Ptr<Socket> m_recv_socket2; /**< A socket to receive on a specific port */
     uint16_t m_port1;
     uint16_t m_port2;
-    double ploss, lb; // packet loss rate and burst loss for Gilbert-Elliott model
+    double ploss, lb; /** < packet loss rate and burst loss for Gilbert-Elliott model */
 
     // Ptr<MyHeader> arqHeader;
     Ipv4Address m_destination_addr;
     Ipv4Address m_my_addr;
+    Ipv4Address m_source_add;
 
     int m_number_of_packets_to_send;
 
@@ -84,6 +94,7 @@ namespace ns3
     Socket_io *skt_io;
     Socket_io::Root *root; /**< my root which is the node from which i sending packets */
     gilbert_Elliott g; /**< Gilbert-Elliott model for burst error (loss) */
+    simple_c ctrl_c; /** < control channel model */
 
 
   };

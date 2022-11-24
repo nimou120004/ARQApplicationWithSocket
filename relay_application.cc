@@ -51,6 +51,20 @@ namespace ns3
   //Constructor
   RelayApplication::RelayApplication()
   {
+    isArqEnabled = true;
+    for (int i = 0; i < MTR; i++)
+      {
+        if (!isArqEnabled)
+          {
+            al[i].isActive=false;
+          }
+        al[i].nt = i;
+      }
+    packets_received = 0;
+    packets_recovered = 0;
+    ploss = 0;
+    lb = 0;
+    ctrl_c.init_c (ploss);
     m_port1 = 7777;
     m_port2 = 9999;
     m_number_of_packets_to_send = 10;
@@ -99,6 +113,16 @@ namespace ns3
     return m_my_addr;
   }
 
+  void RelayApplication::SetSourceAddress(Ipv4Address src_addr)
+  {
+    m_source_add = src_addr;
+  }
+
+  Ipv4Address RelayApplication::GetSourceAddress()
+  {
+    return m_source_add;
+  }
+
   void RelayApplication::StartApplication()
   {
 
@@ -118,76 +142,14 @@ namespace ns3
     m_send_socket = Socket::CreateSocket(GetNode(), tid);
 
     m_recv_socket1->SetRecvCallback(MakeCallback(&RelayApplication::HandleReadTwo, this));
-    //Simulator::Schedule(Seconds (3), &RelayApplication::check_udp_socket, this);
-    //this->check_udp_socket ();
+    /*
     for (int i = 0; i < 10; i++)
       {
         Simulator::Schedule (Seconds (3 + (i * 0.01)), &RelayApplication::check_udp_socket, this);
       }
-
+    */
   }
 
-  int RelayApplication::check_udp_socket ()
-  {
-    if(isStarted == false)
-      {
-        if (starttime == 0)
-          {
-            struct timespec tp;
-            clock_gettime(CLOCK_MONOTONIC, &tp);
-            starttime = tp.tv_nsec;
-          }
-        isStarted = true;
-      }
-   // for (int i = 0; i< m_number_of_packets_to_send; i++)
-    //  {
-        Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
-        PacketDataTag tag;
-        tag.SetNumberOfRepeat (0);
-        if(gal_pn == MAX_PN) gal_pn = 0; else gal_pn++;
-        tag.SetSeqNumber (gal_pn);
-        tag.SetNodeId (GetNode ()->GetId ());
-        tag.SetPacketId (IDM_UDP_ARQ_VIDEO);
-        tag.SetTimestamp (Simulator::Now ());
-        tag.SetTreeNumber (0);
-        m_my_addr.Serialize (tag.sourceAddr);
-        packet->AddPacketTag (tag);
-
-        pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
-        pbb.new_packet_tag.seq_number = tag.GetSeqNumber ();
-        pbb.new_packet_tag.nodeId = tag.GetNodeId ();
-        pbb.new_packet_tag.packet_id = tag.GetpacketId ();
-        pbb.new_packet_tag.timestamp = tag.GetTimestamp ();
-        pbb.new_packet_tag.nt = tag.GetTreeNumber ();
-        std::memcpy(pbb.new_packet_tag.sourceAddr, tag.sourceAddr, sizeof(tag.sourceAddr));
-        pbb.new_packet_tag.next = NULL;
-        pbb.shift_buffer ();
-        if (g.getState ())
-          {
-            if(this->SendPacket (packet) == EXIT_SUCCESS)
-              {
-               /* NS_LOG_INFO(TEAL_CODE << "SendPacket: node " << GetNode ()->GetId ()<< " Send " << packet->GetSize() << " bytes"
-                            << " at time " << Now().GetSeconds()<< " seq-number: " << tag.GetSeqNumber () << END_CODE);
-                */
-                packetsSend++;
-                //printf (".");
-                printf (PURPLE_CODE);
-                printf (" %" PRIu32, tag.GetSeqNumber());
-                printf (END_CODE);
-              }
-
-          }
-        else
-          {
-            printf (" l");
-          }
-
-     // }
-    //Simulator::Schedule(Seconds (4), &RelayApplication::check_udp_socket, this);
-
-
-    return EXIT_SUCCESS;
-  }
 
   void RelayApplication::print_results()
   {
@@ -201,15 +163,15 @@ namespace ns3
     //printf(" recvNack");
     Ptr<Packet> packet;
     Address from;
-    Address localAddress;
     NackDataTag nack_tag;
+    PacketDataTag pckt_tag;
     while ((packet = socket->RecvFrom(from)))
       {
         if(packet->PeekPacketTag (nack_tag))
           {
             if (nack_tag.GetPacketId () == IDM_UDP_ARQ_NACK_AL)
               {
-               // printf(" recvNack");
+                // printf(" recvNack");
                 /*
                 NS_LOG_INFO(PURPLE_CODE << "HandleReadTwo: " << " node " << GetNode ()->GetId () << " Nack received"
                             << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
@@ -245,7 +207,7 @@ namespace ns3
                             tag.SetTreeNumber (pbb.new_packet_tag.nt);
                             std::memcpy(tag.sourceAddr, pbb.new_packet_tag.sourceAddr, sizeof(pbb.new_packet_tag.sourceAddr));
                             req_packet->AddPacketTag (tag);
-                            if (this->SendPacket (req_packet) == EXIT_SUCCESS)
+                            if (this->SendPacket (req_packet, m_destination_addr) == EXIT_SUCCESS)
                               {
                                 packetsRetransmitted++;
                                 printf(" r%lu ", (unsigned long)tag.GetSeqNumber ());
@@ -276,28 +238,117 @@ namespace ns3
 
               }
           }
-        else {
-            // some code
-            printf("Somthing wrong");
-          }
+        else if (packet->PeekPacketTag (pckt_tag)) {
+            if (pckt_tag.GetpacketId () == IDM_UDP_PING)
+              {
+                Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
+                PacketDataTag tag;
+                tag.SetNumberOfRepeat (0);
+                tag.SetNodeId (GetNode ()->GetId ());
+                tag.SetPacketId (IDM_UDP_PING);
+                tag.SetTimestamp (Simulator::Now ());
+                tag.SetTreeNumber (0);
+                m_my_addr.Serialize (tag.sourceAddr);
+                packet->AddPacketTag (tag);
+                if(this->SendPacket (packet, m_source_add) == EXIT_SUCCESS)
+                  {
+                    printf (YELLOW_CODE);
+                    printf ("PING ");
+                    printf (END_CODE);
+                  }
+              }
+            else if (pckt_tag.GetpacketId () == IDM_UDP_ARQ_VIDEO && packet != NULL)
+              {
+                //printf("g");
+                pbb.new_packet_tag.number_of_repeat = pckt_tag.GetNumberOfRepeat ();
+                pbb.new_packet_tag.seq_number = pckt_tag.GetSeqNumber ();
+                pbb.new_packet_tag.nodeId = pckt_tag.GetNodeId ();
+                pbb.new_packet_tag.packet_id = pckt_tag.GetpacketId ();
+                pbb.new_packet_tag.timestamp = pckt_tag.GetTimestamp ();
+                pbb.new_packet_tag.nt = pckt_tag.GetTreeNumber ();
+                int nt = pbb.new_packet_tag.nt; // ree number of current packet for this peer. in this case, always equals to 1
+                std::memcpy(pbb.new_packet_tag.sourceAddr, pckt_tag.sourceAddr, sizeof(pbb.new_packet_tag.sourceAddr));
+                pbb.new_packet_tag.next = NULL;
 
+                if(pbb.add_packet_tag (&pbb.new_packet_tag) == EXIT_SUCCESS)
+                  {
+                    if (SendPacket (packet, m_destination_addr) == EXIT_SUCCESS)
+                      {
+                        printf (GREEN_CODE);
+                        printf (" %" PRIu32, pbb.new_packet_tag.seq_number);
+                        printf (END_CODE);
+                      }
+
+                    if(pbb.new_packet_tag.number_of_repeat == 0)
+                      {
+                        packets_received ++;
+                      }
+                    else
+                      {
+                        packets_recovered ++;
+                      }
+                    /*
+                    if(my_peer->child[nt] != NULL)
+                      {
+                        if (g[nt].getState ())
+                          {
+                            // some code to forward to packet to the next peer in case of tree topology
+                          }
+                      }
+                    */
+                  }
+                if (pckt_tag.GetpacketId () == IDM_UDP_ARQ_VIDEO)
+                  {
+                    //printf("the node id is: %" PRIu32, pbb.new_packet_tag.nodeId);
+                        if ((al[nt].isActive) && (!al[nt].isStarted))
+                          {
+                            al[nt].first_in_transmission = pbb.new_packet_tag.seq_number ;
+                            al[nt].isStarted = true;
+                          }
+
+                    //my_peer->parent[MTR]->ping_n = 0;//a number of activity requests (if ping_n=0 then OK)
+                    //my_peer->parent[MTR]->ping_t = skt_io->GetTickCount();
+
+                    if (al[nt].isActive)
+                      {
+                        //arq lines for packets with "nt" from 0 to mtratio-1
+                        al[nt].cur = pckt_tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                        if (al[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                          {
+                            al[nt].check();
+                          }
+                        for (int i=0 ;i < MTR; i++)
+                          if (al[i].isActive)
+                            {
+                              //printf("isFirstPacket\n");
+                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                              //NackDataTag nack_tag;
+                              al[i].send_nack(m_source_add , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                            }
+                      }
+
+                  }
+
+              }
+
+          }
       }
   }
 
-  int RelayApplication::SendPacket(Ptr<Packet> packet)
-  {
+    int RelayApplication::SendPacket(Ptr<Packet> packet, Ipv4Address to)
+    {
 
-    //NS_LOG_FUNCTION (this << m_my_addr << m_port1 );
+      //NS_LOG_FUNCTION (this << m_my_addr << m_port1 );
 
-    m_send_socket->Connect(InetSocketAddress(m_destination_addr, m_port1));
-    if(m_send_socket->Send(packet)> 0)
-      return EXIT_SUCCESS;
-    else return EXIT_FAILURE;
-    //Simulator::Schedule(Seconds (3), &RelayApplication::SendPacket, this, packet); //, dest_ip, 7777);
-  }
+      m_send_socket->Connect(InetSocketAddress(to, m_port1));
+      if(m_send_socket->Send(packet)> 0)
+        return EXIT_SUCCESS;
+      else return EXIT_FAILURE;
+      //Simulator::Schedule(Seconds (3), &RelayApplication::SendPacket, this, packet); //, dest_ip, 7777);
+    }
 
 
 
-} // namespace ns3
+  } // namespace ns3
 
 
