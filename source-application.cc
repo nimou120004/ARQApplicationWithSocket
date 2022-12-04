@@ -121,7 +121,7 @@ namespace ns3
     m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
     //Simulator::Schedule(Seconds (3), &SourceApplication::check_udp_socket, this);
     //this->check_udp_socket ();
-    for (int i = 0; i < 500; i++)
+    for (int i = 0; i < 5000; i++)
       {
         Simulator::Schedule (Seconds (3 + (i * 0.01)), &SourceApplication::check_udp_socket, this);
       }
@@ -140,50 +140,50 @@ namespace ns3
           }
         isStarted = true;
       }
-   // for (int i = 0; i< m_number_of_packets_to_send; i++)
+    // for (int i = 0; i< m_number_of_packets_to_send; i++)
     //  {
-        Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
-        PacketDataTag tag;
-        tag.SetNumberOfRepeat (0);
-        if(gal_pn == MAX_PN) gal_pn = 0; else gal_pn++;
-        tag.SetSeqNumber (gal_pn);
-        tag.SetNodeId (GetNode ()->GetId ());
-        tag.SetPacketId (IDM_UDP_ARQ_VIDEO);
-        tag.SetTimestamp (Simulator::Now ());
-        tag.SetTreeNumber (0);
-        m_my_addr.Serialize (tag.sourceAddr);
-        packet->AddPacketTag (tag);
+    Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
+    PacketDataTag tag;
+    tag.SetNumberOfRepeat (0);
+    if(gal_pn == MAX_PN) gal_pn = 0; else gal_pn++;
+    tag.SetSeqNumber (gal_pn);
+    tag.SetNodeId (GetNode ()->GetId ());
+    tag.SetPacketId (IDM_UDP_ARQ_VIDEO);
+    tag.SetTimestamp (Simulator::Now ());
+    tag.SetTreeNumber (0);
+    m_my_addr.Serialize (tag.sourceAddr);
+    packet->AddPacketTag (tag);
 
-        pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
-        pbb.new_packet_tag.seq_number = tag.GetSeqNumber ();
-        pbb.new_packet_tag.nodeId = tag.GetNodeId ();
-        pbb.new_packet_tag.packet_id = tag.GetpacketId ();
-        pbb.new_packet_tag.timestamp = tag.GetTimestamp ();
-        pbb.new_packet_tag.nt = tag.GetTreeNumber ();
-        std::memcpy(pbb.new_packet_tag.sourceAddr, tag.sourceAddr, sizeof(tag.sourceAddr));
-        pbb.new_packet_tag.next = NULL;
-        pbb.shift_buffer ();
-        if (g.getState ())
+    pbb.new_packet_tag.number_of_repeat = tag.GetNumberOfRepeat ();
+    pbb.new_packet_tag.seq_number = tag.GetSeqNumber ();
+    pbb.new_packet_tag.nodeId = tag.GetNodeId ();
+    pbb.new_packet_tag.packet_id = tag.GetpacketId ();
+    pbb.new_packet_tag.timestamp = tag.GetTimestamp ();
+    pbb.new_packet_tag.nt = tag.GetTreeNumber ();
+    std::memcpy(pbb.new_packet_tag.sourceAddr, tag.sourceAddr, sizeof(tag.sourceAddr));
+    pbb.new_packet_tag.next = NULL;
+    pbb.shift_buffer ();
+    if (g.getState ())
+      {
+        if(this->SendPacket (packet) == EXIT_SUCCESS)
           {
-            if(this->SendPacket (packet) == EXIT_SUCCESS)
-              {
-               /* NS_LOG_INFO(TEAL_CODE << "SendPacket: node " << GetNode ()->GetId ()<< " Send " << packet->GetSize() << " bytes"
+            /* NS_LOG_INFO(TEAL_CODE << "SendPacket: node " << GetNode ()->GetId ()<< " Send " << packet->GetSize() << " bytes"
                             << " at time " << Now().GetSeconds()<< " seq-number: " << tag.GetSeqNumber () << END_CODE);
                 */
-                packetsSend++;
-                //printf (".");
-                printf (PURPLE_CODE);
-                printf (" %" PRIu32, tag.GetSeqNumber());
-                printf (END_CODE);
-              }
-
-          }
-        else
-          {
-            printf (" l");
+            packetsSend++;
+            //printf (".");
+            printf (PURPLE_CODE);
+            printf (" %" PRIu32, tag.GetSeqNumber());
+            printf (END_CODE);
           }
 
-     // }
+      }
+    else
+      {
+        printf (" l");
+      }
+
+    // }
     //Simulator::Schedule(Seconds (4), &SourceApplication::check_udp_socket, this);
 
 
@@ -210,7 +210,7 @@ namespace ns3
           {
             if (nack_tag.GetPacketId () == IDM_UDP_ARQ_NACK_AL)
               {
-               // printf(" recvNack");
+                // printf(" recvNack");
                 /*
                 NS_LOG_INFO(PURPLE_CODE << "HandleReadTwo: " << " node " << GetNode ()->GetId () << " Nack received"
                             << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()

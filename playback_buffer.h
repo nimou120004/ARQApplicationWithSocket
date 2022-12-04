@@ -8,8 +8,10 @@
 #include <list>
 #include <algorithm>
 #include <iostream>
+#include "socket_io.h"
 
-#define MAX_PBBFR_SIZE	134
+#define MAX_PBBFR_SIZE	2000
+#define MAX_PBBFR_TIME  1000000000 //nanoseconds for timespec var
 
 
 
@@ -18,7 +20,6 @@ namespace ns3
 {
   class PlaybackBuffer
   {
-
 
   private:
       struct pbb_packet_tag {
@@ -48,10 +49,15 @@ namespace ns3
 
     PlaybackBuffer();
     virtual ~PlaybackBuffer();
+    Socket_io socket_io;
     pbb_packet_tag *first_packet_tag, //first packet in a buffer
                *last_packet_tag, //last packet in a buffer
                 new_packet_tag; //a variable for new arrived packet
+    uint64_t ts0, //first packet timestamp
+                          ts_lp; //last packet timestamp
+    uint64_t max_time; //maximum buffer time (0..10e10 nanoseconds)
     int max_length; //maximum length
+    bool isReadyToPlay; //check is required time interval has passed before video playing
 
     bool shift_buffer (); //add packet without sending first packet
 //    bool shift_buffer (int s, struct sockaddr_in addr, unsigned long &pn); //add new packet and send first packet
@@ -61,6 +67,8 @@ namespace ns3
     int add_packet_tag (pbb_packet_tag *packet_tag);
     int add_packet_tag_source_buffer (pbb_packet_tag *packet_tag);
     bool addrEquals(uint8_t addr1[], uint8_t addr2[]);
+    bool play(uint32_t &pn, uint32_t &nr); //for sink part of an application
+    int send_first_packet();
   };
 
 

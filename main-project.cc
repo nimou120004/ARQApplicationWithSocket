@@ -25,9 +25,9 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   //LogComponentEnable ("SourceApplication", LOG_LEVEL_INFO);
 
-  uint32_t nNodes = 7;
+  uint32_t nNodes = 2;
   double simTime = 60; //4 seconds
-  double distance = 37.0;
+  double distance = 34.0;
   bool enablePcap = false;
   cmd.AddValue ("t","Simulation Time", simTime);
   cmd.AddValue ("n", "Number of nodes", nNodes);

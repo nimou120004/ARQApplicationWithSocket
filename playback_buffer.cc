@@ -24,9 +24,15 @@ namespace ns3
   PlaybackBuffer::PlaybackBuffer()
   {
     //ctor
+    //socket_io = new Socket_io();
     length = 0; //current length of playback buffer
     max_length = MAX_PBBFR_SIZE; //maximum length of playback buffer = 134
+    max_time = MAX_PBBFR_TIME; //maximum time of playback buffer before play packet
     last_packet_tag = first_packet_tag = NULL;
+    isReadyToPlay = false;
+    ts0 = 0;
+    ts_lp = 0;
+
 
   }
 
@@ -74,13 +80,15 @@ namespace ns3
     pbb_packet_tag *temp;
     if (first_packet_tag == NULL)
       {
-        length = 0;
         return EXIT_SUCCESS;
       }
     else if (first_packet_tag->next == NULL)
       {
-        delete(first_packet_tag);
-        length = 0;
+        delete (first_packet_tag);
+        isReadyToPlay=false;
+        ts0=0;
+        ts_lp=0;
+        length=0;
         return EXIT_SUCCESS;
       }
     else
@@ -90,16 +98,16 @@ namespace ns3
         first_packet_tag = NULL;
         first_packet_tag = temp;
         length--;
-        if(first_packet_tag == NULL)
-          length = 0;
         return EXIT_SUCCESS;
       }
+    return EXIT_FAILURE;
   }
 
-  //  int PlaybackBuffer::send_first_packet(int s, sockaddr_in addr)
-  //  {
-  //    return EXIT_SUCCESS;
-  //  }
+  int PlaybackBuffer::send_first_packet()
+  {
+    delete_first_packet_tag ();
+    return EXIT_SUCCESS;
+  }
 
   /* for multi-source */
   int PlaybackBuffer::add_packet_tag (pbb_packet_tag *packet)
@@ -113,23 +121,24 @@ namespace ns3
         copy_packet_tag (&new_packet_tag, temp);
         first_packet_tag = temp;
         last_packet_tag = temp;
-        //ts0 = GetTickCount();
+        ts0 = socket_io.GetTickCount ();
       }
     else if ( (addrEquals (first_packet_tag->sourceAddr, packet->sourceAddr)) && (first_packet_tag->seq_number > packet->seq_number))
       {
-            copy_packet_tag (first_packet_tag, temp);
-            copy_packet_tag (&new_packet_tag, first_packet_tag);
-            first_packet_tag->next = temp;
-            return EXIT_SUCCESS;
+        copy_packet_tag (first_packet_tag, temp);
+        copy_packet_tag (&new_packet_tag, first_packet_tag);
+        first_packet_tag->next = temp;
+        //ts0 = socket_io.GetTickCount ();
+        //return EXIT_SUCCESS;
       }
-     else if ((addrEquals (last_packet_tag->sourceAddr, packet->sourceAddr)) && (last_packet_tag->seq_number < packet->seq_number))
+    else if ((addrEquals (last_packet_tag->sourceAddr, packet->sourceAddr)) && (last_packet_tag->seq_number < packet->seq_number))
       {
-            copy_packet_tag (&new_packet_tag, temp);
-            last_packet_tag->next = temp;
-            last_packet_tag = temp;
-            return EXIT_SUCCESS;
+        copy_packet_tag (&new_packet_tag, temp);
+        last_packet_tag->next = temp;
+        last_packet_tag = temp;
+        //ts_lp = socket_io.GetTickCount ();
+        //return EXIT_SUCCESS;
       }
-
     else
       {
         copy_packet_tag (&new_packet_tag, temp);
@@ -158,7 +167,7 @@ namespace ns3
         temp->next = cur;
       }
     length++;
-    //ts_lp = GetTickCount();
+    ts_lp = socket_io.GetTickCount ();
     return EXIT_SUCCESS;
   }
 
@@ -392,9 +401,35 @@ namespace ns3
     return true;
   }
 
+  bool PlaybackBuffer::play(uint32_t &pn, uint32_t &nr)
+  {
 
+    if (!isReadyToPlay)
+      {
+        printf("OKKKKKK");
+        if ((ts_lp-ts0) > max_time)
+          {
+            isReadyToPlay = true;
+          }
 
+        return false;
+      }
+    else
+      {
+        if (first_packet_tag!=NULL)
+          {
+            pn = first_packet_tag->seq_number; //first packet number for statistics
+            nr = first_packet_tag->number_of_repeat; //first packet repeat numer for statistics
+          }
+        else
+          {
+            printf("[NULL PBB]");
+          }
+         send_first_packet ();
+      }
 
+    return true;
+  }
 
 }
 

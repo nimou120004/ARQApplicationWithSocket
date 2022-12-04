@@ -11,6 +11,12 @@
 #include "nack-data-tag.h"
 #include "socket_io.h"
 #include "inttypes.h"
+#include "sys/stat.h"
+#include "iostream"
+#include "string.h"
+#include "cstdio"
+#include "ctime"
+#include "time.h"
 
 
 
@@ -48,7 +54,9 @@ namespace ns3
   //Constructor
   SinkApplication::SinkApplication()
   {
-
+    tmi = 500;
+    plr_c_corr.tm = tmi;
+    plr_c_pure.tm = tmi;
     m_port1 = 7777;
     m_port2 = 9999;
     m_packet_size = 1000;
@@ -101,6 +109,17 @@ namespace ns3
         g[i].initGilbert_Elliott (ploss, lb);
       }
     ctrl_c.init_c (ploss);
+    //creation of log files
+    Dir = "Res";
+    mkdir(Dir.c_str (), 0777);
+    path_temp = Dir + "//test_" + getTime () + "_log.txt";
+    log_file = std::fopen(path_temp.c_str (),"w");
+    path_temp = Dir + "//test_" + getTime () + "_plr_corr.csv";
+    plr_f_corr = fopen(path_temp.c_str(),"w");
+    path_temp = Dir + "//test_" + getTime () + "_plr_pure.csv";
+    plr_f_pure = fopen(path_temp.c_str(),"w");
+
+
 
   }
 
@@ -307,12 +326,12 @@ namespace ns3
                           if (al[i].isActive)
                             {
                               //printf("isFirstPacket\n");
-
                               Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
                               //NackDataTag nack_tag;
                               al[i].send_nack(m_destination_addrs[0] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
                             }
                       }
+
                     if ((al2[nt].isActive) && pbb.new_packet_tag.nodeId == 2)
                       {
                         //arq lines for packets with "nt" from 0 to mtratio-1
@@ -475,6 +494,20 @@ namespace ns3
                               al10[i].send_nack(m_destination_addrs[9] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
                             }
                       }
+                    timespec ts;
+                    if (!plr_c_corr.isStarted)
+                      {
+
+                        clock_gettime(CLOCK_MONOTONIC, &ts);
+                        plr_c_corr.starttime = ts.tv_sec;
+                        plr_c_corr.isStarted = true;
+                      }
+                    if (!plr_c_pure.isStarted)
+                      {
+                        clock_gettime(CLOCK_MONOTONIC, &ts);
+                        plr_c_pure.starttime = ts.tv_sec;
+                        plr_c_pure.isStarted = true;
+                      }
                   }
 
 
@@ -486,6 +519,7 @@ namespace ns3
           }
 
       }
+    check_pbb ();
     // m_recv_socket1->SetRecvCallback(MakeCallback(&SinkApplication::HandleReadOne, this));
 
 
@@ -495,6 +529,49 @@ namespace ns3
   {
     printf ("\nPackets received: %d \n", packets_received);
     printf ("Packets recovered: %d \n", packets_recovered);
+  }
+
+  int SinkApplication::check_pbb()
+  {
+    uint32_t sn; //temporary sequantial number
+    uint32_t nr; //temporary packet repeat number
+    if (pbb.play(sn,nr))
+      {
+        //calculate corrected plr if playback buffer was shifted
+        fprintf(log_file,"plr_c_corr sn= %" PRIu32, sn);
+        fprintf(log_file, "nr= %" PRIu32, nr);
+        fprintf(log_file, "\n");
+        plr_c_corr.cur = sn; //input for plr counter
+        plr_c_corr.check(log_file);
+        if (plr_c_corr.calculate() == EXIT_SUCCESS)
+          plr_c_corr.write_plr_to_file(plr_f_corr);
+        //calculate pure plr if current outcoming packet isn't recovered one
+        if (nr == 0)
+          {
+            fprintf(log_file,"plr_c_pure sn= %" PRIu32, sn);
+            fprintf(log_file, "nr= %" PRIu32, nr);
+            fprintf(log_file, "\n");
+            plr_c_pure.cur = sn; //input for plr counter
+            plr_c_pure.check(log_file);
+            if (plr_c_pure.calculate() == EXIT_SUCCESS)
+              plr_c_pure.write_plr_to_file(plr_f_pure);
+          }
+      }
+    else
+      return EXIT_FAILURE;
+    return EXIT_SUCCESS;
+  }
+
+  std::string SinkApplication::getTime()
+  {
+    time_t curr_time;
+    tm * curr_tm;
+    char time_string[20];
+    time(&curr_time);
+    curr_tm = localtime(&curr_time);
+    std::strftime(time_string, 20, "%T", curr_tm);
+
+    return std::string(time_string);
   }
 
 
