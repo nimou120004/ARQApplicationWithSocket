@@ -4,6 +4,7 @@
 #include "ns3/internet-module.h"
 #include "source-application.h"
 #include "sink-application.h"
+#include "relay_application.h"
 #include "nack-data-tag.h"
 #include "packet-data-tag.h"
 #include "netDevice-setup.h"
@@ -25,8 +26,8 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   //LogComponentEnable ("SourceApplication", LOG_LEVEL_INFO);
 
-  uint32_t nNodes = 2;
-  double simTime = 60; //4 seconds
+  uint32_t nNodes = 3;
+  double simTime = 120; //4 seconds
   double distance = 34.0;
   bool enablePcap = false;
   cmd.AddValue ("t","Simulation Time", simTime);
@@ -90,7 +91,7 @@ int main (int argc, char *argv[])
   // Create source application
   std::vector<Ipv4Address> srcAddresses;
   Ipv4Address dest_ip ("10.1.1.1");
-  for (int i = 1; i < (int)nNodes; i++)
+  for (int i = 1; i < (int)nNodes - 1; i++)
     {
       Ptr <SourceApplication> appSource = CreateObject <SourceApplication> ();
       std:: string str = "10.1.1.";
@@ -104,8 +105,19 @@ int main (int argc, char *argv[])
       nodes.Get(i)->AddApplication (appSource);
     }
 
+  //Create relay node
+
+  Ptr<RelayApplication> appRelay = CreateObject<RelayApplication>();
+  Ipv4Address relayAddr("10.1.1.3");
+  appRelay->SetMyAddr (relayAddr);
+  appRelay->SetDestinationAddr (dest_ip);
+  appRelay->SetSourceAddress (srcAddresses.front ());
+  appRelay->SetStartTime (Seconds (1));
+  appRelay->SetStopTime (Seconds(simTime));
+  nodes.Get(nNodes - 1)->AddApplication (appRelay);
+
   //Create sink application
-  Ipv4Address my_addr ("10.1.1.2");
+  //Ipv4Address my_addr ("10.1.1.2");
   Ptr <SinkApplication> appSink = CreateObject <SinkApplication> ();
   appSink->SetStartTime (Seconds(1));
   appSink->SetStopTime (Seconds (simTime));
@@ -114,12 +126,15 @@ int main (int argc, char *argv[])
   for (uint32_t i = 0; i < srcAddresses.size (); i++)
     {
       appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (), srcAddresses[i]);
+      appSink->m_destination_addrs.insert (appSink->m_destination_addrs.end (), relayAddr);
     }
   nodes.Get(0)->AddApplication (appSink);
 
 
+
   LogComponentEnable ("SourceApplication", LOG_LEVEL_ALL);
   LogComponentEnable ("SinkApplication", LOG_LEVEL_ALL);
+  LogComponentEnable ("RelayApplication", LOG_LEVEL_ALL);
 
   AnimationInterface anim("animARQ.xml");
   anim.SetConstantPosition (nodes.Get (0), 0.0, 0.0);

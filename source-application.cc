@@ -55,8 +55,8 @@ namespace ns3
     isStarted = false;
     starttime = 0;
     gal_pn = 0;
-    ploss = 0.0;
-    lb = 0;
+    ploss = 0.1;
+    lb = 8;
     packetsSend = 0;
     packetsRetransmitted = 0;
     g.initGilbert_Elliott (ploss, lb);
@@ -106,7 +106,7 @@ namespace ns3
     Ptr<UniformRandomVariable> rand = CreateObject<UniformRandomVariable> ();
     m_random_offset = MicroSeconds (rand->GetValue(2,10));
 
-    NS_LOG_FUNCTION("At time ... "  << Simulator::Now ().GetSeconds ()<< m_my_addr );
+    NS_LOG_FUNCTION("Start application ... "  << m_my_addr );
 
     TypeId tid = TypeId::LookupByName("ns3::UdpSocketFactory");
     m_recv_socket1 = Socket::CreateSocket(GetNode(), tid);

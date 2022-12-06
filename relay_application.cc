@@ -161,23 +161,25 @@ namespace ns3
   {
     //NS_LOG_FUNCTION(this << socket);
     //printf(" recvNack");
+
     Ptr<Packet> packet;
     Address from;
-    NackDataTag nack_tag;
+    //NackDataTag nack_tag;
     PacketDataTag pckt_tag;
     while ((packet = socket->RecvFrom(from)))
       {
-        if(packet->PeekPacketTag (nack_tag))
+
+        /* if(packet->PeekPacketTag (nack_tag))
           {
             if (nack_tag.GetPacketId () == IDM_UDP_ARQ_NACK_AL)
               {
                 // printf(" recvNack");
-                /*
+
                 NS_LOG_INFO(PURPLE_CODE << "HandleReadTwo: " << " node " << GetNode ()->GetId () << " Nack received"
                             << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
                             << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << "" <<  END_CODE);
 
-                */
+
                 uint32_t nack_n = nack_tag.GetNumberOfRepeat ();
                 int nack_bc = nack_tag.GetAmountOfBurst ();
                 unsigned char nack_nt = nack_tag.GetTreeNumber ();
@@ -220,7 +222,7 @@ namespace ns3
                         nack_bl--;
                       }//while (nack_bl>0)
 
-                    /*
+
                     if (nack_dwbl > 0)
                       {
                         put_uc (bfr_out, 0, IDM_UDP_ARQ_DNWM_AL);
@@ -233,27 +235,33 @@ namespace ns3
                           fprintf(log_file,"SENT DNWM sn=%lu fpn=%lu dwbl=%d\n",nack_pn,nack_fpn,nack_dwbl);
 
                       }
-                    */
+
                   }//for (nack.bc)
 
               }
           }
-        else if (packet->PeekPacketTag (pckt_tag)) {
+        else*/
+        if (packet->PeekPacketTag (pckt_tag))
+          {
+            printf("\n");
             if (pckt_tag.GetpacketId () == IDM_UDP_PING)
               {
+
                 Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
+
                 PacketDataTag tag;
                 tag.SetNumberOfRepeat (0);
-                tag.SetNodeId (GetNode ()->GetId ());
-                tag.SetPacketId (IDM_UDP_PING);
-                tag.SetTimestamp (Simulator::Now ());
+                tag.SetNodeId (pckt_tag.GetNodeId ());
+                tag.SetPacketId (pckt_tag.GetpacketId ());
+                tag.SetTimestamp (pckt_tag.GetTimestamp ());
                 tag.SetTreeNumber (0);
-                m_my_addr.Serialize (tag.sourceAddr);
+                std::memcpy(pckt_tag.sourceAddr, tag.sourceAddr, sizeof(tag.sourceAddr));
+
                 packet->AddPacketTag (tag);
                 if(this->SendPacket (packet, m_source_add) == EXIT_SUCCESS)
                   {
-                    printf (YELLOW_CODE);
-                    printf ("PING ");
+                    printf (GREEN_CODE);
+                    printf ("R_PING ");
                     printf (END_CODE);
                   }
               }

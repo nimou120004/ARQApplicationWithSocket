@@ -34,7 +34,7 @@ namespace ns3
     loss_ct = 0;
     loss_ct1 = 0;
     ct_isk = 0;
-    timer = 0;
+    timer = 0.0;
     justStarted = true;
     measure_number = 0;
     for (int i = 0; i < MAX_BURST_LENGTH_PLRC + 1; i++)
@@ -43,14 +43,17 @@ namespace ns3
   }
   int plr_counter::write_plr_to_file (FILE * file)
   {
-    fprintf (file, "%lu;%f\n", timer, plr);
+    fprintf (file, "%.3lf;%f\n", timer, plr);
     return EXIT_SUCCESS;
   }
   int plr_counter::check(FILE *file)
   {
+
     ct++;
+    // enter to if condition only if there was lost packets
     if ((cur != (prev + 1)) && (!justStarted) && (prev != max_pn) && (cur != 0))
       {
+        //printf(" check");
         if ((long)(cur - prev - 1) > 0)
           {
             if ((cur - prev - 1) <= MAX_BURST_LENGTH_PLRC)
@@ -81,18 +84,32 @@ namespace ns3
               fprintf(file, "PACKET LOSS SN:%lu lost\n", prev + 1);
           }
       }  //endif (cur==prev+1)
-    else
-      prev = cur;
+    else{
+       prev = cur;
+       //printf("%lu-%lu", cur, prev);
+      }
+
+
     return EXIT_SUCCESS;
   }
   int plr_counter::calculate()
   {
     //counting PLR every "tm" packets
+    double ms = 0;
     if (ct >= tm)
       {
+        //printf("=%lu/%lu",ct, tm );
         timespec ts;
         clock_gettime(CLOCK_MONOTONIC, &ts);
-        timer = ts.tv_sec - starttime;
+        ms = round(ts.tv_nsec / 1.0e6); // Convert nanoseconds to milliseconds
+        if (ms > 999) {
+            timer = (ts.tv_sec + 1) - starttime;
+                ms = 0;
+            }
+        else {
+            timer = (ts.tv_sec + ms/1000.0) - starttime;
+          }
+
         justStarted = false;
         if (ct > tm)
           {

@@ -54,9 +54,9 @@ namespace ns3
   //Constructor
   SinkApplication::SinkApplication()
   {
-    tmi = 500;
-    plr_c_corr.tm = tmi;
-    plr_c_pure.tm = tmi;
+    //tmi = 500;
+    //plr_c_corr.tm = tmi;
+    //plr_c_pure.tm = tmi;
     m_port1 = 7777;
     m_port2 = 9999;
     m_packet_size = 1000;
@@ -520,9 +520,47 @@ namespace ns3
 
       }
     check_pbb ();
-    // m_recv_socket1->SetRecvCallback(MakeCallback(&SinkApplication::HandleReadOne, this));
+    switch_trasmission();
 
 
+
+  }
+
+  int SinkApplication::switch_trasmission()
+  {
+    if(plr_pure > 0.1)
+      {
+        //switch to relay mode (send ping packet)
+        send_ping(m_destination_addrs[m_destination_addrs.size () - 1]);
+        return EXIT_SUCCESS;
+      }
+    else
+      {
+        return EXIT_FAILURE;
+      }
+
+  }
+
+  int SinkApplication::send_ping(Ipv4Address addr)
+  {
+    Ptr<Packet> packet_ping = Create<Packet>(MTU_SIZE);
+    PacketDataTag tag;
+    tag.SetNodeId (GetNode ()->GetId ());
+    tag.SetPacketId (IDM_UDP_PING);
+    tag.SetTimestamp (Simulator::Now ());
+    m_my_addr.Serialize (tag.sourceAddr);
+
+
+    m_send_socket->Connect (InetSocketAddress(addr, m_port1));
+    if (m_send_socket->Send (packet_ping) > 0)
+      {
+        printf (YELLOW_CODE);
+        printf (" D_PING");
+        printf (END_CODE);
+        return EXIT_SUCCESS;
+      }
+
+    else return EXIT_FAILURE;
   }
 
   void SinkApplication::print_results ()
@@ -544,7 +582,11 @@ namespace ns3
         plr_c_corr.cur = sn; //input for plr counter
         plr_c_corr.check(log_file);
         if (plr_c_corr.calculate() == EXIT_SUCCESS)
-          plr_c_corr.write_plr_to_file(plr_f_corr);
+          {
+            plr_corr = plr_c_corr.plr;
+            plr_c_corr.write_plr_to_file(plr_f_corr);
+          }
+
         //calculate pure plr if current outcoming packet isn't recovered one
         if (nr == 0)
           {
@@ -554,7 +596,11 @@ namespace ns3
             plr_c_pure.cur = sn; //input for plr counter
             plr_c_pure.check(log_file);
             if (plr_c_pure.calculate() == EXIT_SUCCESS)
-              plr_c_pure.write_plr_to_file(plr_f_pure);
+              {
+                plr_pure = plr_c_pure.plr;
+                plr_c_pure.write_plr_to_file(plr_f_pure);
+              }
+
           }
       }
     else

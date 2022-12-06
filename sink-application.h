@@ -57,11 +57,15 @@ namespace ns3
 
     int packets_received;
     int packets_recovered;
+
+    double plr_corr, plr_pure; // plr with ARQ and without ARQ measured for each portion (1000 pckts)
     std::vector<Ipv4Address> m_destination_addrs;
     Ptr<Socket> m_recv_socket1; /**< A socket to receive on a specific port */
 
 
     std::string getTime();
+    int switch_trasmission();
+    int send_ping(Ipv4Address addr);
   private:
 
 

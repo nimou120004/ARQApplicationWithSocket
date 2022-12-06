@@ -56,6 +56,9 @@
 #define ID_ERR_STOP         100
 #define BL_BUFFER_SIZE      200 //size of burst_length and first_packet buffers
 
+#define PLR_THRESHOLD       0.1 // plr threshold to switch to relay mode
+
+
 using namespace ns3;
 namespace ns3
 {

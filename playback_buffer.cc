@@ -14,6 +14,7 @@
 #include <iostream>
 #include <time.h>
 #include "socket_io.h"
+#include "inttypes.h"
 
 #include "playback_buffer.h"
 
@@ -406,7 +407,7 @@ namespace ns3
 
     if (!isReadyToPlay)
       {
-        printf("OKKKKKK");
+        //printf("OKKKKKK");
         if ((ts_lp-ts0) > max_time)
           {
             isReadyToPlay = true;
@@ -416,9 +417,11 @@ namespace ns3
       }
     else
       {
+        //printf("OKKKKKK");
         if (first_packet_tag!=NULL)
           {
             pn = first_packet_tag->seq_number; //first packet number for statistics
+            //printf(" %" PRIu32, pn);
             nr = first_packet_tag->number_of_repeat; //first packet repeat numer for statistics
           }
         else

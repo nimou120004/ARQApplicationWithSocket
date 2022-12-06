@@ -30,8 +30,8 @@ namespace ns3
     unsigned long ct,
     loss_ct,
     loss_ct1,
-    ct_isk,
-    timer;
+    ct_isk;
+    double timer;
     bool justStarted; //don't count plr for first measure
     unsigned short measure_number;
 
