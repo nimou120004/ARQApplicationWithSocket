@@ -243,12 +243,9 @@ namespace ns3
         else*/
         if (packet->PeekPacketTag (pckt_tag))
           {
-            printf("\n");
             if (pckt_tag.GetpacketId () == IDM_UDP_PING)
               {
-
                 Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
-
                 PacketDataTag tag;
                 tag.SetNumberOfRepeat (0);
                 tag.SetNodeId (pckt_tag.GetNodeId ());
@@ -267,7 +264,6 @@ namespace ns3
               }
             else if (pckt_tag.GetpacketId () == IDM_UDP_ARQ_VIDEO && packet != NULL)
               {
-                //printf("g");
                 pbb.new_packet_tag.number_of_repeat = pckt_tag.GetNumberOfRepeat ();
                 pbb.new_packet_tag.seq_number = pckt_tag.GetSeqNumber ();
                 pbb.new_packet_tag.nodeId = pckt_tag.GetNodeId ();

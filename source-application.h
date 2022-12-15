@@ -31,7 +31,7 @@ namespace ns3
 
     /** \brief Send an outgoing packet. This creates a new socket every time (not the best solution)
       */
-    int SendPacket (Ptr<Packet> packet);
+    int SendPacket (Ptr<Packet> packet, Ipv4Address to);
 
     /** \brief handle the transmission and processing of data packets
       */
@@ -53,6 +53,8 @@ namespace ns3
     int packetsSend;
     int packetsRetransmitted;
     uint32_t nodeId;
+    bool active_mode;
+    Ipv4Address m_relay_addr;
 
   private:
 
@@ -70,6 +72,7 @@ namespace ns3
     // Ptr<MyHeader> arqHeader;
     Ipv4Address m_destination_addr;
     Ipv4Address m_my_addr;
+
 
     int m_number_of_packets_to_send;
 

@@ -57,6 +57,8 @@ namespace ns3
 
     int packets_received;
     int packets_recovered;
+    Ipv4Address m_relay_addr;
+    bool active_mode;
 
     double plr_corr, plr_pure; // plr with ARQ and without ARQ measured for each portion (1000 pckts)
     std::vector<Ipv4Address> m_destination_addrs;
@@ -65,7 +67,7 @@ namespace ns3
 
     std::string getTime();
     int switch_trasmission();
-    int send_ping(Ipv4Address addr);
+    int send_ping(std::vector<Ipv4Address> addrs);
   private:
 
 

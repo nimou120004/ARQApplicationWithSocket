@@ -49,13 +49,14 @@ namespace ns3
   //Constructor
   SourceApplication::SourceApplication()
   {
+    active_mode = false;
     m_port1 = 7777;
     m_port2 = 9999;
     m_number_of_packets_to_send = 10;
     isStarted = false;
     starttime = 0;
     gal_pn = 0;
-    ploss = 0.1;
+    ploss = 0.2;
     lb = 8;
     packetsSend = 0;
     packetsRetransmitted = 0;
@@ -165,7 +166,7 @@ namespace ns3
     pbb.shift_buffer ();
     if (g.getState ())
       {
-        if(this->SendPacket (packet) == EXIT_SUCCESS)
+        if(this->SendPacket (packet, m_destination_addr) == EXIT_SUCCESS)
           {
             /* NS_LOG_INFO(TEAL_CODE << "SendPacket: node " << GetNode ()->GetId ()<< " Send " << packet->GetSize() << " bytes"
                             << " at time " << Now().GetSeconds()<< " seq-number: " << tag.GetSeqNumber () << END_CODE);
@@ -175,6 +176,15 @@ namespace ns3
             printf (PURPLE_CODE);
             printf (" %" PRIu32, tag.GetSeqNumber());
             printf (END_CODE);
+
+            if(active_mode){
+                if(this->SendPacket (packet, m_relay_addr) == EXIT_SUCCESS){
+                    printf (PURPLE_CODE);
+                    printf (" %" PRIu32, tag.GetSeqNumber());
+                    printf (END_CODE);
+                  }
+
+              }
           }
 
       }
@@ -204,6 +214,7 @@ namespace ns3
     Address from;
     Address localAddress;
     NackDataTag nack_tag;
+    PacketDataTag data_tag;
     while ((packet = socket->RecvFrom(from)))
       {
         if(packet->PeekPacketTag (nack_tag))
@@ -246,7 +257,7 @@ namespace ns3
                             tag.SetTreeNumber (pbb.new_packet_tag.nt);
                             std::memcpy(tag.sourceAddr, pbb.new_packet_tag.sourceAddr, sizeof(pbb.new_packet_tag.sourceAddr));
                             req_packet->AddPacketTag (tag);
-                            if (this->SendPacket (req_packet) == EXIT_SUCCESS)
+                            if (this->SendPacket (req_packet, m_destination_addr) == EXIT_SUCCESS)
                               {
                                 packetsRetransmitted++;
                                 printf(" r%lu ", (unsigned long)tag.GetSeqNumber ());
@@ -277,22 +288,25 @@ namespace ns3
 
               }
           }
-        else {
+        else if (packet->PeekPacketTag (data_tag) && data_tag.GetpacketId () == IDM_UDP_PING ) {
             // some code
-            printf("Somthing wrong");
+            //printf("PIIING \n");
+            active_mode = true;
           }
 
       }
   }
 
-  int SourceApplication::SendPacket(Ptr<Packet> packet)
+  int SourceApplication::SendPacket(Ptr<Packet> packet, Ipv4Address to)
   {
 
     //NS_LOG_FUNCTION (this << m_my_addr << m_port1 );
 
-    m_send_socket->Connect(InetSocketAddress(m_destination_addr, m_port1));
-    if(m_send_socket->Send(packet)> 0)
-      return EXIT_SUCCESS;
+    m_send_socket->Connect(InetSocketAddress(to, m_port1));
+    if(m_send_socket->Send(packet)> 0){
+        return EXIT_SUCCESS;
+    }
+
     else return EXIT_FAILURE;
     //Simulator::Schedule(Seconds (3), &SourceApplication::SendPacket, this, packet); //, dest_ip, 7777);
   }

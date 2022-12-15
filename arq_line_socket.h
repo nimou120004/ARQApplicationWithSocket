@@ -65,6 +65,7 @@ namespace ns3
 
             int reset();
             int check(); //to check current p2p pn (cur) in all waiting groups
+            int send_nack(Ipv4Address m_destination_addr, Ipv4Address relay, uint16_t m_port, simple_c *ctrl_c, Ptr<Packet> nack,  Ptr<Socket> m_send_socket, uint32_t nodeId, bool activeMode);
             int send_nack(Ipv4Address m_destination_addr, uint16_t m_port, simple_c *ctrl_c, Ptr<Packet> nack,  Ptr<Socket> m_send_socket, uint32_t nodeId);
             int is_it_first_packet(unsigned char nr);//to check is current packet is first in waiting group
             int do_not_wait(unsigned long sn, unsigned char length);//in case of recieving "do not wait" meessage

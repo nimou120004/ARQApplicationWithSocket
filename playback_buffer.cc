@@ -85,6 +85,7 @@ namespace ns3
       }
     else if (first_packet_tag->next == NULL)
       {
+
         delete (first_packet_tag);
         isReadyToPlay=false;
         ts0=0;
@@ -94,6 +95,7 @@ namespace ns3
       }
     else
       {
+        printf(" DEL");
         temp = first_packet_tag->next;
         delete (first_packet_tag);
         first_packet_tag = NULL;
@@ -124,7 +126,7 @@ namespace ns3
         last_packet_tag = temp;
         ts0 = socket_io.GetTickCount ();
       }
-    else if ( (addrEquals (first_packet_tag->sourceAddr, packet->sourceAddr)) && (first_packet_tag->seq_number > packet->seq_number))
+    else if ((addrEquals (first_packet_tag->sourceAddr, packet->sourceAddr)) && (first_packet_tag->seq_number > packet->seq_number))
       {
         copy_packet_tag (first_packet_tag, temp);
         copy_packet_tag (&new_packet_tag, first_packet_tag);

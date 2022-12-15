@@ -57,6 +57,7 @@ namespace ns3
     //tmi = 500;
     //plr_c_corr.tm = tmi;
     //plr_c_pure.tm = tmi;
+    active_mode = false;
     m_port1 = 7777;
     m_port2 = 9999;
     m_packet_size = 1000;
@@ -209,6 +210,8 @@ namespace ns3
                     printf (CYAN_CODE);
                     printf (" %" PRIu32, pbb.new_packet_tag.seq_number);
                     printf (END_CODE);
+
+
                     if(pbb.new_packet_tag.number_of_repeat == 0)
                       {
                         packets_received ++;
@@ -325,10 +328,9 @@ namespace ns3
                         for (int i=0 ;i < MTR; i++)
                           if (al[i].isActive)
                             {
-                              //printf("isFirstPacket\n");
                               Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
-                              //NackDataTag nack_tag;
-                              al[i].send_nack(m_destination_addrs[0] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                              al[i].send_nack(m_destination_addrs[0] ,m_relay_addr, m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId, active_mode);
+
                             }
                       }
 
@@ -347,7 +349,7 @@ namespace ns3
 
                               Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
                               //NackDataTag nack_tag;
-                              al2[i].send_nack(m_destination_addrs[1] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                              al2[i].send_nack(m_destination_addrs[1] ,m_relay_addr, m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId, active_mode);
                             }
                       }
                     if ((al3[nt].isActive) && pbb.new_packet_tag.nodeId == 3)
@@ -365,7 +367,7 @@ namespace ns3
 
                               Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
                               //NackDataTag nack_tag;
-                              al3[i].send_nack(m_destination_addrs[2] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                              al3[i].send_nack(m_destination_addrs[2] ,m_relay_addr, m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId, active_mode);
                             }
                       }
                     if ((al4[nt].isActive) && pbb.new_packet_tag.nodeId == 4)
@@ -383,7 +385,7 @@ namespace ns3
 
                               Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
                               //NackDataTag nack_tag;
-                              al4[i].send_nack(m_destination_addrs[3] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                              al4[i].send_nack(m_destination_addrs[3] ,m_relay_addr, m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId, active_mode);
                             }
                       }
                     if ((al5[nt].isActive) && pbb.new_packet_tag.nodeId == 5)
@@ -401,7 +403,7 @@ namespace ns3
 
                               Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
                               //NackDataTag nack_tag;
-                              al5[i].send_nack(m_destination_addrs[4] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                              al5[i].send_nack(m_destination_addrs[4] ,m_relay_addr, m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId, active_mode);
                             }
                       }
                     if ((al6[nt].isActive) && pbb.new_packet_tag.nodeId == 6)
@@ -419,7 +421,7 @@ namespace ns3
 
                               Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
                               //NackDataTag nack_tag;
-                              al6[i].send_nack(m_destination_addrs[5] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                              al6[i].send_nack(m_destination_addrs[5] ,m_relay_addr, m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId, active_mode);
                             }
                       }
                     if ((al7[nt].isActive) && pbb.new_packet_tag.nodeId == 7)
@@ -437,92 +439,91 @@ namespace ns3
 
                               Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
                               //NackDataTag nack_tag;
-                              al7[i].send_nack(m_destination_addrs[6] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
+                              al7[i].send_nack(m_destination_addrs[6] ,m_relay_addr, m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId, active_mode);
                             }
-                      }
-                    if ((al8[nt].isActive) && pbb.new_packet_tag.nodeId == 8)
-                      {
-                        //arq lines for packets with "nt" from 0 to mtratio-1
-                        al8[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
-                        if (al8[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                        if ((al8[nt].isActive) && pbb.new_packet_tag.nodeId == 8)
                           {
-                            al8[nt].check();
-                          }
-                        for (int i=0 ;i < MTR; i++)
-                          if (al8[i].isActive)
-                            {
-                              //printf("isFirstPacket\n");
+                            //arq lines for packets with "nt" from 0 to mtratio-1
+                            al8[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                            if (al8[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                              {
+                                al8[nt].check();
+                              }
+                            for (int i=0 ;i < MTR; i++)
+                              if (al8[i].isActive)
+                                {
+                                  //printf("isFirstPacket\n");
 
-                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
-                              //NackDataTag nack_tag;
-                              al8[i].send_nack(m_destination_addrs[7] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
-                            }
-                      }
-                    if ((al9[nt].isActive) && pbb.new_packet_tag.nodeId == 9)
-                      {
-                        //arq lines for packets with "nt" from 0 to mtratio-1
-                        al9[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
-                        if (al9[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                                  Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                                  //NackDataTag nack_tag;
+                                  al8[i].send_nack(m_destination_addrs[7] ,m_relay_addr, m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId, active_mode);
+                                }
+                          }
+                        if ((al9[nt].isActive) && pbb.new_packet_tag.nodeId == 9)
                           {
-                            al9[nt].check();
+                            //arq lines for packets with "nt" from 0 to mtratio-1
+                            al9[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                            if (al9[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                              {
+                                al9[nt].check();
+                              }
+                            for (int i=0 ;i < MTR; i++)
+                              if (al9[i].isActive)
+                                {
+                                  //printf("isFirstPacket\n");
+
+                                  Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                                  //NackDataTag nack_tag;
+                                  al9[i].send_nack(m_destination_addrs[8] ,m_relay_addr, m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId, active_mode);
+                                }
+                            if ((al10[nt].isActive) && pbb.new_packet_tag.nodeId == 10)
+                              {
+                                //arq lines for packets with "nt" from 0 to mtratio-1
+                                al10[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
+                                if (al10[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
+                                  {
+                                    al10[nt].check();
+                                  }
+                                for (int i=0 ;i < MTR; i++)
+                                  if (al10[i].isActive)
+                                    {
+                                      //printf("isFirstPacket\n");
+
+                                      Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
+                                      //NackDataTag nack_tag;
+                                      al10[i].send_nack(m_destination_addrs[9] ,m_relay_addr, m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId, active_mode);
+                                    }
+                              }
+                            timespec ts;
+                            if (!plr_c_corr.isStarted)
+                              {
+
+                                clock_gettime(CLOCK_MONOTONIC, &ts);
+                                plr_c_corr.starttime = ts.tv_sec;
+                                plr_c_corr.isStarted = true;
+                              }
+                            if (!plr_c_pure.isStarted)
+                              {
+                                clock_gettime(CLOCK_MONOTONIC, &ts);
+                                plr_c_pure.starttime = ts.tv_sec;
+                                plr_c_pure.isStarted = true;
+                              }
                           }
-                        for (int i=0 ;i < MTR; i++)
-                          if (al9[i].isActive)
-                            {
-                              //printf("isFirstPacket\n");
 
-                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
-                              //NackDataTag nack_tag;
-                              al9[i].send_nack(m_destination_addrs[8] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
-                            }
-                      }
-                    if ((al10[nt].isActive) && pbb.new_packet_tag.nodeId == 10)
-                      {
-                        //arq lines for packets with "nt" from 0 to mtratio-1
-                        al10[nt].cur = tag.GetSeqNumber (); //get_ul (bfr_in, 7); //old p2p packet number
-                        if (al10[nt].is_it_first_packet(pbb.new_packet_tag.number_of_repeat) == EXIT_FAILURE)
-                          {
-                            al10[nt].check();
-                          }
-                        for (int i=0 ;i < MTR; i++)
-                          if (al10[i].isActive)
-                            {
-                              //printf("isFirstPacket\n");
 
-                              Ptr<Packet> nack = Create<Packet>(MTU_NACK_SIZE);
-                              //NackDataTag nack_tag;
-                              al10[i].send_nack(m_destination_addrs[9] , m_port1, &ctrl_c, nack, m_send_socket, pbb.new_packet_tag.nodeId);
-                            }
-                      }
-                    timespec ts;
-                    if (!plr_c_corr.isStarted)
-                      {
-
-                        clock_gettime(CLOCK_MONOTONIC, &ts);
-                        plr_c_corr.starttime = ts.tv_sec;
-                        plr_c_corr.isStarted = true;
-                      }
-                    if (!plr_c_pure.isStarted)
-                      {
-                        clock_gettime(CLOCK_MONOTONIC, &ts);
-                        plr_c_pure.starttime = ts.tv_sec;
-                        plr_c_pure.isStarted = true;
                       }
                   }
-
+                else
+                  {
+                    //some code
+                  }
 
               }
-          }
-        else
-          {
-            //some code
-          }
+            check_pbb ();
+            //switch_trasmission();
 
+          }
       }
-    check_pbb ();
-    switch_trasmission();
-
-
 
   }
 
@@ -530,8 +531,11 @@ namespace ns3
   {
     if(plr_pure > 0.1)
       {
-        //switch to relay mode (send ping packet)
-        send_ping(m_destination_addrs[m_destination_addrs.size () - 1]);
+        active_mode = true;
+        //switch to relay mode (send ping packet) by sending 7 ping packets
+        for (int i= 0; i < 7; i++){
+            send_ping(m_destination_addrs);
+          }
         return EXIT_SUCCESS;
       }
     else
@@ -541,26 +545,32 @@ namespace ns3
 
   }
 
-  int SinkApplication::send_ping(Ipv4Address addr)
+  int SinkApplication::send_ping(std::vector<Ipv4Address> addrs)
   {
     Ptr<Packet> packet_ping = Create<Packet>(MTU_SIZE);
     PacketDataTag tag;
+    tag.SetNumberOfRepeat (0);
+    tag.SetSeqNumber (0);
     tag.SetNodeId (GetNode ()->GetId ());
     tag.SetPacketId (IDM_UDP_PING);
     tag.SetTimestamp (Simulator::Now ());
+    tag.SetTreeNumber (0);
     m_my_addr.Serialize (tag.sourceAddr);
+    packet_ping->AddPacketTag (tag);
+    for (int i=0; i < (int)addrs.size(); i++){
+        m_send_socket->Connect (InetSocketAddress(addrs[i], m_port1));
+        if (m_send_socket-> Send (packet_ping) > 0)
+          {
+            printf (YELLOW_CODE);
+            printf (" D_PING");
+            printf (END_CODE);
+            //return EXIT_SUCCESS;
+          }
 
-
-    m_send_socket->Connect (InetSocketAddress(addr, m_port1));
-    if (m_send_socket->Send (packet_ping) > 0)
-      {
-        printf (YELLOW_CODE);
-        printf (" D_PING");
-        printf (END_CODE);
-        return EXIT_SUCCESS;
+        //else return EXIT_FAILURE;
       }
+    return EXIT_SUCCESS;
 
-    else return EXIT_FAILURE;
   }
 
   void SinkApplication::print_results ()
@@ -599,6 +609,7 @@ namespace ns3
               {
                 plr_pure = plr_c_pure.plr;
                 plr_c_pure.write_plr_to_file(plr_f_pure);
+                switch_trasmission ();
               }
 
           }

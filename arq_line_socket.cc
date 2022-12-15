@@ -240,6 +240,171 @@ namespace ns3 {
       }
   }
 
+  int arq_line_socket::send_nack(Ipv4Address m_destination_addr, Ipv4Address relay, uint16_t m_port1, simple_c *ctrl_c, Ptr<Packet> nack, Ptr<Socket> m_send_socket, uint32_t nodeId, bool activeMode)
+  {
+    int tw;
+    int i;
+    doNotDrop = true;
+
+    if (aowg)
+      {
+        //printf(" amountOfWaitingGroup %u ", aowg );
+        for (int wg_n = 0; wg_n < aowg; wg_n++)
+          {
+            if ((tw = (GetTickCount() - wg[wg_n].t_waiting)) >= tr)
+              {
+                wg[wg_n].t_waiting = GetTickCount();
+                wg[wg_n].tt = wg[wg_n].tt + tr;
+                if (wg[wg_n].tt > total_waiting_time)
+                  {
+                    free(wg[wg_n].b);
+                    wg[wg_n].b = NULL;
+                    aowg--;
+                    if (aowg == 0)
+                      {
+                        free(wg);
+                        wg = NULL;
+                      }
+                    else
+                      {
+                        for (i = wg_n; i < aowg; i++)
+                          {
+                            wg[i] = wg[i+1];
+                            wg[i].b = wg[i+1].b;
+                          }
+                        wg = (waited_group *)realloc(wg, aowg * sizeof(waited_group));
+                        wg_n--;
+                      } //endelse
+                  }
+                else
+                  {
+                    NackDataTag nack_tag;
+                    nack_tag.SetPacketId (IDM_UDP_ARQ_NACK_AL);
+                    wg[wg_n].nr++;
+                    nack_tag.SetNumberOfRepeat (wg[wg_n].nr);
+                    nack_tag.SetAmountOfBurst (wg[wg_n].amount_of_bursts);
+                    nack_tag.SetTreeNumber (nt);
+                    for (i = 0; i < wg[wg_n].amount_of_bursts; i++)
+                      {
+                        nack_tag.put_uint (nack_tag.burst_first_sn, i, (int)wg[aowg - 1].b[0].first_sn);
+                        //printf(" Puttednack_pn= %lu", wg[aowg - 1].b[0].first_sn );
+                        nack_tag.put_uint (nack_tag.bursts_length, i, (int)wg[aowg - 1].b[0].length);
+                      }
+
+                    if (!ctrl_c->error ())
+                      {
+                        nack->RemoveAllPacketTags ();
+                        nack->AddPacketTag (nack_tag);
+                        m_send_socket->Connect (InetSocketAddress(m_destination_addr, m_port1));
+                        if (m_send_socket->Send (nack) < 0)
+                          printf(" Error : can't send message %d.\n", IDM_UDP_ARQ_NACK_AL);
+                        else
+                          {
+                            //fprintf(file,"\n");
+                            //std::ostream str;
+                            //std::cout << m_destination_addr;
+                            printf(" N%d-id%" PRIu32,wg[aowg - 1].nr, nodeId);
+                          }
+                        if(activeMode){
+                            m_send_socket->Connect (InetSocketAddress(relay, m_port1));
+                            if (m_send_socket->Send (nack) < 0)
+                              printf(" Error : can't send message to relay node %d.\n", IDM_UDP_ARQ_NACK_AL);
+                            else
+                              {
+                                printf(" N%d-id%" PRIu32,wg[aowg - 1].nr, nodeId);
+                              }
+                          }
+
+                      }
+                    else
+                      {
+                        printf("l");
+                        //fprintf(file,"l%d",nt);
+                      }
+
+                  }   //endelse
+              }  //endif
+          }
+      }//if wait
+    if ((cur != prev + 1) && (prev != max_pn || cur))// && (cur >= first_in_transmission + 10) )
+      {
+        //printf(" cur!=prev %lu!=%lu", cur, prev );
+        if (((long)(cur - prev - 1)) > 0)
+          {
+            if ((cur - prev - 1) < MAX_BURST_LENGTH_AL)
+              stat[cur - prev - 1]++;
+            if (aowg < 255)
+              {
+                aowg++;
+                wg = (waited_group *)realloc(wg, aowg * sizeof(waited_group));
+                wg[aowg - 1].b = NULL;
+              }
+            wg[aowg - 1].t_waiting = GetTickCount();
+            wg[aowg - 1].b = (burst *) realloc(wg[aowg-1].b, sizeof(burst));
+            wg[aowg - 1].b[0].first_sn = prev + 1;
+            wg[aowg - 1].b[0].length = cur - wg[aowg - 1].b[0].first_sn;
+            wg[aowg - 1].amount_of_bursts = 1;
+            wg[aowg - 1].tt = 0;
+            wg[aowg - 1].nr = 1;
+            wg[aowg - 1].recalc_nr = false;
+
+            //to fill NACK message to current parent peer
+            NackDataTag nack_tag;
+            nack_tag.SetPacketId (IDM_UDP_ARQ_NACK_AL);
+            nack_tag.SetNumberOfRepeat (1);
+            nack_tag.SetAmountOfBurst (wg[aowg - 1].amount_of_bursts);
+            nack_tag.SetTreeNumber (nt);
+            nack_tag.put_uint (nack_tag.burst_first_sn, 0, (int)wg[aowg - 1].b[0].first_sn);
+            nack_tag.put_uint (nack_tag.bursts_length, 0, (int)wg[aowg - 1].b[0].length);
+            //printf("firstSN=%lu length=%u", wg[aowg - 1].b[0].first_sn, wg[aowg - 1].b[0].length);
+
+            if (!ctrl_c->error())
+              {
+                nack->AddPacketTag (nack_tag);
+                m_send_socket->Connect (InetSocketAddress(m_destination_addr, m_port1));
+                if (m_send_socket->Send (nack) < 0)
+                  printf(" Error : can't send message %d.\n", IDM_UDP_ARQ_NACK_AL);
+                else
+                  {
+                    //fprintf(file,"\n");
+                    //std::cout << m_destination_addr;
+                    printf(" N%d-id%" PRIu32,wg[aowg - 1].nr, nodeId );
+                  }
+                if(activeMode){
+                    m_send_socket->Connect (InetSocketAddress(relay, m_port1));
+                    if (m_send_socket->Send (nack) < 0)
+                      printf(" Error : can't send message to relay node %d.\n", IDM_UDP_ARQ_NACK_AL);
+                    else
+                      {
+                        printf(" N%d-id%" PRIu32,wg[aowg - 1].nr, nodeId);
+                      }
+                  }
+              }
+            else
+              {
+                printf("l");
+              }
+            prev = cur;
+            //}
+          }  // endif
+        else if (((prev - cur) >= 134) && (long (prev - cur) < 10000) )
+          {
+            ct_isk++;
+            doNotDrop = false;
+          }
+        else if (prev > cur)
+          {
+            ct_isk++;
+          }
+        else
+          prev = cur;
+      }//endif (cur!=prev+1...
+    else
+      prev = cur;
+    return EXIT_SUCCESS;
+
+  }
+
   int arq_line_socket::send_nack(Ipv4Address m_destination_addr, uint16_t m_port1, simple_c *ctrl_c, Ptr<Packet> nack, Ptr<Socket> m_send_socket, uint32_t nodeId)
   {
     int tw;
@@ -361,6 +526,7 @@ namespace ns3 {
                     //std::cout << m_destination_addr;
                     printf(" N%d-id%" PRIu32,wg[aowg - 1].nr, nodeId );
                   }
+
               }
             else
               {
@@ -386,7 +552,6 @@ namespace ns3 {
     return EXIT_SUCCESS;
 
   }
-
 
   int arq_line_socket::do_not_wait(unsigned long sn, unsigned char length)
   {

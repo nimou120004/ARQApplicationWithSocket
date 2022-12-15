@@ -85,9 +85,10 @@ int main (int argc, char *argv[])
   ifaces = address.Assign (devices);
 
 
+
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   Packet::EnablePrinting ();
-
+  Ipv4Address relayAddr("10.1.1.3");
   // Create source application
   std::vector<Ipv4Address> srcAddresses;
   Ipv4Address dest_ip ("10.1.1.1");
@@ -96,6 +97,7 @@ int main (int argc, char *argv[])
       Ptr <SourceApplication> appSource = CreateObject <SourceApplication> ();
       std:: string str = "10.1.1.";
       appSource->SetDestinationAddr (dest_ip);
+      appSource->m_relay_addr = relayAddr;
       str = str + std::to_string (i+1);
       Ipv4Address my_addr (str.c_str ());
       appSource->SetMyAddr (my_addr);
@@ -108,7 +110,7 @@ int main (int argc, char *argv[])
   //Create relay node
 
   Ptr<RelayApplication> appRelay = CreateObject<RelayApplication>();
-  Ipv4Address relayAddr("10.1.1.3");
+
   appRelay->SetMyAddr (relayAddr);
   appRelay->SetDestinationAddr (dest_ip);
   appRelay->SetSourceAddress (srcAddresses.front ());
@@ -121,6 +123,7 @@ int main (int argc, char *argv[])
   Ptr <SinkApplication> appSink = CreateObject <SinkApplication> ();
   appSink->SetStartTime (Seconds(1));
   appSink->SetStopTime (Seconds (simTime));
+  appSink->m_relay_addr = relayAddr;
   Ipv4Address my_ip("10.1.1.1");
   appSink->SetMyAddr (my_ip);
   for (uint32_t i = 0; i < srcAddresses.size (); i++)
