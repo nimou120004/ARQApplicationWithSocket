@@ -62,7 +62,7 @@ namespace ns3
   {
     if(length >= max_length){
         add_packet_tag_source_buffer (&new_packet_tag);
-        delete_first_packet_tag ();
+        delete_first_packet_tag_source_buffer ();
         return true;
       }
     else{
@@ -83,6 +83,40 @@ namespace ns3
       {
         return EXIT_SUCCESS;
       }
+    // during active mode of relay, the BS buffer deleting packets faster than receiving new ones
+    // this leads to emptying the buffer very fast.  to avoid this, we added the condition if (last_packet_tag->seq_number - first_packet_tag->seq_number > 50)
+    if (last_packet_tag->seq_number - first_packet_tag->seq_number > 50){
+        if (first_packet_tag->next == NULL)
+          {
+            delete (first_packet_tag);
+            isReadyToPlay=false;
+            ts0=0;
+            ts_lp=0;
+            length=0;
+            return EXIT_SUCCESS;
+          }
+        else
+          {
+            temp = first_packet_tag->next;
+            delete (first_packet_tag);
+            first_packet_tag = NULL;
+            first_packet_tag = temp;
+            length--;
+            return EXIT_SUCCESS;
+          }
+        return EXIT_SUCCESS;
+      }
+
+    return EXIT_FAILURE;
+  }
+
+  int PlaybackBuffer::delete_first_packet_tag_source_buffer()
+  {
+    pbb_packet_tag *temp;
+    if (first_packet_tag == NULL)
+      {
+        return EXIT_SUCCESS;
+      }
     else if (first_packet_tag->next == NULL)
       {
 
@@ -95,7 +129,6 @@ namespace ns3
       }
     else
       {
-        printf(" DEL");
         temp = first_packet_tag->next;
         delete (first_packet_tag);
         first_packet_tag = NULL;
@@ -381,7 +414,7 @@ namespace ns3
   int PlaybackBuffer::clear_pbb()
   {
     while(length != 0)
-      delete_first_packet_tag ();
+      delete_first_packet_tag_source_buffer ();
     length = 0;
     return EXIT_SUCCESS;
 
@@ -409,7 +442,6 @@ namespace ns3
 
     if (!isReadyToPlay)
       {
-        //printf("OKKKKKK");
         if ((ts_lp-ts0) > max_time)
           {
             isReadyToPlay = true;
@@ -419,7 +451,6 @@ namespace ns3
       }
     else
       {
-        //printf("OKKKKKK");
         if (first_packet_tag!=NULL)
           {
             pn = first_packet_tag->seq_number; //first packet number for statistics

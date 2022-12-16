@@ -519,10 +519,10 @@ namespace ns3
                   }
 
               }
-            check_pbb ();
-            //switch_trasmission();
 
           }
+        check_pbb ();
+        //switch_trasmission();
       }
 
   }

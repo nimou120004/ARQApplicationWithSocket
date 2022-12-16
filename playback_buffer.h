@@ -69,6 +69,7 @@ namespace ns3
     bool addrEquals(uint8_t addr1[], uint8_t addr2[]);
     bool play(uint32_t &pn, uint32_t &nr); //for sink part of an application
     int send_first_packet();
+    int delete_first_packet_tag_source_buffer();
   };
 
 
