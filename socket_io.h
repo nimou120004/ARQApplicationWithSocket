@@ -12,7 +12,7 @@
 
 #define MAX_PACKET_NUMBER  0xFFFFFFFF //4294967295
 
-#define MTU_SIZE        1000 //maximum transmission unit
+#define MTU_SIZE        250 //maximum transmission unit
 #define MTU_NACK_SIZE   93 // maximum transmission unit for NACK packets
 #define VIDEO_CHUNCK_SIZE 188
 #define VIDEO_SIZE      1314 //7*188

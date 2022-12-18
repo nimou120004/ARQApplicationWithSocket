@@ -164,21 +164,22 @@ namespace ns3
 
     Ptr<Packet> packet;
     Address from;
-    //NackDataTag nack_tag;
+    NackDataTag nack_tag;
     PacketDataTag pckt_tag;
     while ((packet = socket->RecvFrom(from)))
       {
 
-        /* if(packet->PeekPacketTag (nack_tag))
+        if(packet->PeekPacketTag (nack_tag))
           {
             if (nack_tag.GetPacketId () == IDM_UDP_ARQ_NACK_AL)
               {
                 // printf(" recvNack");
 
+                /*
                 NS_LOG_INFO(PURPLE_CODE << "HandleReadTwo: " << " node " << GetNode ()->GetId () << " Nack received"
                             << " at time " << Now().GetSeconds() << " from " <<InetSocketAddress::ConvertFrom (from).GetIpv4 ()
                             << " port " <<InetSocketAddress::ConvertFrom (from).GetPort () << "" <<  END_CODE);
-
+                */
 
                 uint32_t nack_n = nack_tag.GetNumberOfRepeat ();
                 int nack_bc = nack_tag.GetAmountOfBurst ();
@@ -212,7 +213,7 @@ namespace ns3
                             if (this->SendPacket (req_packet, m_destination_addr) == EXIT_SUCCESS)
                               {
                                 packetsRetransmitted++;
-                                printf(" r%lu ", (unsigned long)tag.GetSeqNumber ());
+                                printf(" rR%lu ", (unsigned long)tag.GetSeqNumber ());
                               }
 
                           }
@@ -222,7 +223,7 @@ namespace ns3
                         nack_bl--;
                       }//while (nack_bl>0)
 
-
+                    /*
                     if (nack_dwbl > 0)
                       {
                         put_uc (bfr_out, 0, IDM_UDP_ARQ_DNWM_AL);
@@ -235,14 +236,16 @@ namespace ns3
                           fprintf(log_file,"SENT DNWM sn=%lu fpn=%lu dwbl=%d\n",nack_pn,nack_fpn,nack_dwbl);
 
                       }
+                      */
 
                   }//for (nack.bc)
 
               }
           }
-        else*/
+
         if (packet->PeekPacketTag (pckt_tag))
           {
+
             if (pckt_tag.GetpacketId () == IDM_UDP_PING)
               {
                 Ptr<Packet> packet = Create<Packet>(MTU_SIZE);
@@ -252,6 +255,7 @@ namespace ns3
                 tag.SetPacketId (pckt_tag.GetpacketId ());
                 tag.SetTimestamp (pckt_tag.GetTimestamp ());
                 tag.SetTreeNumber (0);
+
                 std::memcpy(pckt_tag.sourceAddr, tag.sourceAddr, sizeof(tag.sourceAddr));
 
                 packet->AddPacketTag (tag);
@@ -336,6 +340,7 @@ namespace ns3
               }
 
           }
+
       }
   }
 

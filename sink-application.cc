@@ -529,7 +529,7 @@ namespace ns3
 
   int SinkApplication::switch_trasmission()
   {
-    if(plr_pure > 0.1)
+    if(plr_pure > 0.03)
       {
         active_mode = true;
         //switch to relay mode (send ping packet) by sending 7 ping packets
@@ -594,7 +594,14 @@ namespace ns3
         if (plr_c_corr.calculate() == EXIT_SUCCESS)
           {
             plr_corr = plr_c_corr.plr;
-            plr_c_corr.write_plr_to_file(plr_f_corr);
+            if(active_mode){
+                plr_c_corr.write_plr_to_file(plr_f_corr, 1);
+              }
+            else
+              {
+                plr_c_corr.write_plr_to_file(plr_f_corr, 0);
+              }
+
           }
 
         //calculate pure plr if current outcoming packet isn't recovered one
@@ -608,7 +615,14 @@ namespace ns3
             if (plr_c_pure.calculate() == EXIT_SUCCESS)
               {
                 plr_pure = plr_c_pure.plr;
-                plr_c_pure.write_plr_to_file(plr_f_pure);
+                if(active_mode)
+                  {
+                    plr_c_pure.write_plr_to_file(plr_f_pure, 1);
+                  }
+                else {
+                    plr_c_pure.write_plr_to_file(plr_f_pure, 0);
+                  }
+
                 switch_trasmission ();
               }
 

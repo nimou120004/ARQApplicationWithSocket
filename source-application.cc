@@ -56,8 +56,8 @@ namespace ns3
     isStarted = false;
     starttime = 0;
     gal_pn = 0;
-    ploss = 0.2;
-    lb = 8;
+    ploss = 0.0;
+    lb = 0;
     packetsSend = 0;
     packetsRetransmitted = 0;
     g.initGilbert_Elliott (ploss, lb);
@@ -122,9 +122,9 @@ namespace ns3
     m_recv_socket1->SetRecvCallback(MakeCallback(&SourceApplication::HandleReadTwo, this));
     //Simulator::Schedule(Seconds (3), &SourceApplication::check_udp_socket, this);
     //this->check_udp_socket ();
-    for (int i = 0; i < 5000; i++)
+    for (int i = 0; i < 7000; i++)
       {
-        Simulator::Schedule (Seconds (3 + (i * 0.01)), &SourceApplication::check_udp_socket, this);
+        Simulator::Schedule (Seconds (3 + (i * 0.005)), &SourceApplication::check_udp_socket, this);
       }
 
   }
@@ -166,23 +166,27 @@ namespace ns3
     pbb.shift_buffer ();
     if (g.getState ())
       {
-        if(this->SendPacket (packet, m_destination_addr) == EXIT_SUCCESS)
-          {
-            /* NS_LOG_INFO(TEAL_CODE << "SendPacket: node " << GetNode ()->GetId ()<< " Send " << packet->GetSize() << " bytes"
+
+        if(active_mode){
+            if(this->SendPacket (packet, m_relay_addr) == EXIT_SUCCESS){
+                printf (PURPLE_CODE);
+                printf (" %" PRIu32, tag.GetSeqNumber());
+                printf (END_CODE);
+              }
+
+          }
+        else {
+            if (this->SendPacket (packet, m_destination_addr) == EXIT_SUCCESS)
+              {
+                /* NS_LOG_INFO(TEAL_CODE << "SendPacket: node " << GetNode ()->GetId ()<< " Send " << packet->GetSize() << " bytes"
                             << " at time " << Now().GetSeconds()<< " seq-number: " << tag.GetSeqNumber () << END_CODE);
                 */
-            packetsSend++;
-            //printf (".");
-            printf (PURPLE_CODE);
-            printf (" %" PRIu32, tag.GetSeqNumber());
-            printf (END_CODE);
+                packetsSend++;
+                //printf (".");
+                printf (PURPLE_CODE);
+                printf (" %" PRIu32, tag.GetSeqNumber());
+                printf (END_CODE);
 
-            if(active_mode){
-                if(this->SendPacket (packet, m_relay_addr) == EXIT_SUCCESS){
-                    printf (PURPLE_CODE);
-                    printf (" %" PRIu32, tag.GetSeqNumber());
-                    printf (END_CODE);
-                  }
 
               }
           }
@@ -290,7 +294,7 @@ namespace ns3
           }
         else if (packet->PeekPacketTag (data_tag) && data_tag.GetpacketId () == IDM_UDP_PING ) {
             // some code
-            //printf("PIIING \n");
+            printf(" S_PING");
             active_mode = true;
           }
 
@@ -305,7 +309,7 @@ namespace ns3
     m_send_socket->Connect(InetSocketAddress(to, m_port1));
     if(m_send_socket->Send(packet)> 0){
         return EXIT_SUCCESS;
-    }
+      }
 
     else return EXIT_FAILURE;
     //Simulator::Schedule(Seconds (3), &SourceApplication::SendPacket, this, packet); //, dest_ip, 7777);

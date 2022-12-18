@@ -41,9 +41,9 @@ namespace ns3
       stat[i] = 0;
 
   }
-  int plr_counter::write_plr_to_file (FILE * file)
+  int plr_counter::write_plr_to_file (FILE * file, int active_mode)
   {
-    fprintf (file, "%.3lf;%f\n", timer, plr);
+    fprintf (file, "%.3lf;%f;%d\n", timer, plr, active_mode);
     return EXIT_SUCCESS;
   }
   int plr_counter::check(FILE *file)

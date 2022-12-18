@@ -9,8 +9,8 @@
 #include <algorithm>
 #include <iostream>
 
-#define MAX_BURST_LENGTH_PLRC 1000
-#define TM_PLRC               1000
+#define MAX_BURST_LENGTH_PLRC 200
+#define TM_PLRC               500
 
 using namespace ns3;
 namespace ns3
@@ -39,7 +39,7 @@ namespace ns3
     plr_counter();
     int check(FILE *file);
     int calculate();
-    int write_plr_to_file(FILE *file);
+    int write_plr_to_file(FILE *file, int active_mode);
     int write_stat_to_file (FILE *file);
   };
 
